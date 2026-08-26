@@ -1,0 +1,43 @@
+# Entorno y secretos
+.env
+.env.local
+.env.*.local
+**/.env
+!**/.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+backend/.venv/
+.pytest_cache/
+.mypy_cache/
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.vite/
+*.log
+npm-debug.log*
+
+# Docker / IDE
+.docker/
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Cobertura y temporales
+coverage/
+htmlcov/
+.tmp/
+temp/
+
+# Informes académicos (fuera del repo / no versionar)
+docs/
+*.pdf
+Entregables*/
