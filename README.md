@@ -5,7 +5,7 @@ Aplicación de gestión de inventario multi-uso (tienda, papelería, uso persona
 
 ## Acceso para revisión (producción)
 
-- **URL:** https://inventario-web-7qyp.onrender.com/login
+- **URL:** https://inventario-web-7qyp.onrender.com/
 - **Correo:** `pruebas@gmail.com`
 - **Contraseña:** `prueba123`
 - **Repositorio:** https://github.com/BraulioOsorio/inventario
