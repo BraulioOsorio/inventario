@@ -1,3 +1,5 @@
+import time
+
 from sqlalchemy import text
 
 from app.core.config import settings
@@ -54,11 +56,29 @@ def seed_admin() -> None:
         db.close()
 
 
-def init_db() -> None:
-    Base.metadata.create_all(bind=engine)
-    migrate_schema()
-    seed_admin()
-    print("Tablas creadas / verificadas en Supabase Postgres.")
+def init_db(retries: int = 8, delay_seconds: int = 5) -> None:
+    last_error: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            print(f"Conectando a Postgres (intento {attempt}/{retries})...")
+            Base.metadata.create_all(bind=engine)
+            migrate_schema()
+            seed_admin()
+            print("Tablas creadas / verificadas en Supabase Postgres.")
+            return
+        except Exception as exc:  # noqa: BLE001
+            last_error = exc
+            print(f"Fallo de conexión: {exc}")
+            if attempt < retries:
+                time.sleep(delay_seconds)
+
+    print(
+        "ERROR: no se pudo conectar a la base. "
+        "En Render usa la URL del Connection Pooler de Supabase (IPv4), "
+        "no el host db.xxx.supabase.co directo."
+    )
+    if last_error:
+        raise last_error
 
 
 if __name__ == "__main__":

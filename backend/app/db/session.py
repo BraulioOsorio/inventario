@@ -2,14 +2,16 @@ from collections.abc import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
+# NullPool evita problemas con el pooler de Supabase (Render / serverless)
 engine = create_engine(
     settings.sqlalchemy_url,
     pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
+    poolclass=NullPool,
+    connect_args={"connect_timeout": 15},
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

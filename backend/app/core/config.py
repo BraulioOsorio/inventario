@@ -50,17 +50,20 @@ class Settings(BaseSettings):
     @property
     def sqlalchemy_url(self) -> str:
         if self.DATABASE_URL:
-            url = self.DATABASE_URL
-            # SQLAlchemy 2 + psycopg2
+            url = self.DATABASE_URL.strip()
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql://", 1)
             if url.startswith("postgresql://"):
-                return url.replace("postgresql://", "postgresql+psycopg2://", 1)
+                url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+            if "sslmode=" not in url:
+                url += ("&" if "?" in url else "?") + "sslmode=require"
             return url
         from urllib.parse import quote_plus
 
         password = quote_plus(self.DB_PASSWORD)
         return (
             f"postgresql+psycopg2://{self.DB_USER}:{password}"
-            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}?sslmode=require"
         )
 
 
