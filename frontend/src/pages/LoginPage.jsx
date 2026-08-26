@@ -30,11 +30,11 @@ export default function LoginPage() {
   return (
     <div className="auth-shell">
       <section className="auth-hero">
-        <p className="eyebrow">Arquitectura de Software</p>
+        <p className="eyebrow">ERP en la nube</p>
         <h1>Inventario Modular</h1>
         <p className="lede">
-          Una sola plataforma para tienda, papelería o uso personal. Control de stock,
-          categorías y movimientos con arquitectura en la nube.
+          Plataforma modular para tienda, papelería o uso personal: productos,
+          categorías, movimientos y administración de usuarios.
         </p>
       </section>
 
@@ -63,9 +63,9 @@ export default function LoginPage() {
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
         </label>
 
-        {error && <p className="error">{error}</p>}
-        <button className="primary" disabled={busy}>
-          {busy ? "Procesando…" : mode === "login" ? "Entrar" : "Crear cuenta"}
+        {error && <div className="alert error">{error}</div>}
+        <button className="btn-primary" disabled={busy}>
+          {busy ? "Procesando…" : mode === "login" ? "Entrar al sistema" : "Crear cuenta"}
         </button>
       </form>
     </div>
