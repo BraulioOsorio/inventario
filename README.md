@@ -3,6 +3,15 @@
 Prototipo académico para **Arquitectura de Software** (Tecnológica del Oriente).  
 Aplicación de gestión de inventario multi-uso (tienda, papelería, uso personal) con arquitectura modular en la nube.
 
+## Acceso para revisión (producción)
+
+- **URL:** https://inventario-web-7qyp.onrender.com/login
+- **Correo:** `pruebas@gmail.com`
+- **Contraseña:** `prueba123`
+- **Repositorio:** https://github.com/BraulioOsorio/inventario
+
+> Nota: en el plan gratuito de Render el servicio puede “dormir”; la primera carga puede tardar unos segundos.
+
 ## Estructura
 
 ```
