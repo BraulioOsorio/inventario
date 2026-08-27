@@ -25,6 +25,61 @@ export function Panel({ title, action, children, className = "" }) {
   );
 }
 
+export function FormCard({ title, subtitle, children, onSubmit, className = "" }) {
+  return (
+    <form className={`form-card ${className}`} onSubmit={onSubmit}>
+      {(title || subtitle) && (
+        <div className="form-card-head">
+          {title && <h2>{title}</h2>}
+          {subtitle && <p>{subtitle}</p>}
+        </div>
+      )}
+      <div className="form-card-body">{children}</div>
+    </form>
+  );
+}
+
+export function FormSection({ title, children }) {
+  return (
+    <fieldset className="form-section">
+      {title && <legend>{title}</legend>}
+      {children}
+    </fieldset>
+  );
+}
+
+export function FormField({
+  label,
+  hint,
+  required,
+  children,
+  className = "",
+  span = 1,
+}) {
+  return (
+    <label className={`form-field span-${span} ${className}`}>
+      <span className="form-label">
+        {label}
+        {required && <span className="req">*</span>}
+      </span>
+      {children}
+      {hint && <span className="form-hint">{hint}</span>}
+    </label>
+  );
+}
+
+export function FormRow({ cols = 2, children }) {
+  return <div className={`form-row cols-${cols}`}>{children}</div>;
+}
+
+export function FormActions({ children, align = "end" }) {
+  return <div className={`form-actions align-${align}`}>{children}</div>;
+}
+
+export function Toolbar({ children }) {
+  return <div className="toolbar">{children}</div>;
+}
+
 export function KpiCard({ label, value, hint, tone = "default", icon }) {
   return (
     <article className={`kpi kpi-${tone}`}>

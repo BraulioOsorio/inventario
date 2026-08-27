@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth";
+import { Alert, FormField } from "../components/ui";
 
 export default function LoginPage() {
   const { token, login, register } = useAuth();
@@ -38,7 +39,12 @@ export default function LoginPage() {
         </p>
       </section>
 
-      <form className="auth-card" onSubmit={onSubmit}>
+      <form className="auth-card form-card" onSubmit={onSubmit}>
+        <div className="form-card-head">
+          <h2>{mode === "login" ? "Iniciar sesión" : "Crear cuenta"}</h2>
+          <p>Accede a tu panel de inventario</p>
+        </div>
+
         <div className="tabs">
           <button type="button" className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>
             Iniciar sesión
@@ -48,25 +54,24 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {mode === "register" && (
-          <label>
-            Nombre completo
-            <input value={fullName} onChange={(e) => setFullName(e.target.value)} required minLength={2} />
-          </label>
-        )}
-        <label>
-          Correo
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </label>
-        <label>
-          Contraseña
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-        </label>
+        <div className="form-card-body">
+          {mode === "register" && (
+            <FormField label="Nombre completo" required>
+              <input value={fullName} onChange={(e) => setFullName(e.target.value)} required minLength={2} placeholder="Tu nombre" />
+            </FormField>
+          )}
+          <FormField label="Correo electrónico" required>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="usuario@correo.com" />
+          </FormField>
+          <FormField label="Contraseña" required hint="Mínimo 6 caracteres">
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" />
+          </FormField>
 
-        {error && <div className="alert error">{error}</div>}
-        <button className="btn-primary" disabled={busy}>
-          {busy ? "Procesando…" : mode === "login" ? "Entrar al sistema" : "Crear cuenta"}
-        </button>
+          {error && <Alert type="error">{error}</Alert>}
+          <button className="btn-primary btn-block" disabled={busy}>
+            {busy ? "Procesando…" : mode === "login" ? "Entrar al sistema" : "Crear cuenta"}
+          </button>
+        </div>
       </form>
     </div>
   );

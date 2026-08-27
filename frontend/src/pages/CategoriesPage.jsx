@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { Alert, FormActions, FormCard, FormField, PageHeader } from "../components/ui";
 
 export default function CategoriesPage() {
   const { token } = useAuth();
@@ -26,7 +27,7 @@ export default function CategoriesPage() {
       await api.createCategory(token, { name, description: description || null });
       setName("");
       setDescription("");
-      setOk("Categoría creada.");
+      setOk("Categoría creada correctamente.");
       await load();
     } catch (err) {
       setError(err.message);
@@ -34,27 +35,39 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="page">
-      <header className="page-head">
-        <div>
-          <p className="kicker">Clasificación</p>
-          <h1>Categorías</h1>
-          <p className="sub">Organiza el catálogo para tienda, papelería o uso personal.</p>
-        </div>
-      </header>
+    <div className="page page-module">
+      <PageHeader
+        kicker="Clasificación"
+        title="Categorías"
+        subtitle="Organiza el catálogo para tienda, papelería o uso personal."
+      />
 
-      {(error || ok) && <div className={`alert ${error ? "error" : "success"}`}>{error || ok}</div>}
+      {error && <Alert type="error">{error}</Alert>}
+      {ok && <Alert type="success">{ok}</Alert>}
 
-      <div className="split-2">
-        <form className="panel form-panel" onSubmit={onSubmit}>
-          <h2>Nueva categoría</h2>
-          <label>Nombre<input required value={name} onChange={(e) => setName(e.target.value)} /></label>
-          <label>Descripción<textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} /></label>
-          <button className="btn-primary">Crear categoría</button>
-        </form>
+      <div className="module-split">
+        <FormCard
+          title="Nueva categoría"
+          subtitle="Agrupa productos relacionados para facilitar la búsqueda."
+          onSubmit={onSubmit}
+          className="form-narrow"
+        >
+          <FormField label="Nombre" required>
+            <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Papelería escolar" />
+          </FormField>
+          <FormField label="Descripción" hint="Opcional">
+            <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Breve descripción de la categoría" />
+          </FormField>
+          <FormActions>
+            <button type="submit" className="btn-primary">Crear categoría</button>
+          </FormActions>
+        </FormCard>
 
-        <section className="panel">
-          <div className="panel-head"><h2>Listado</h2></div>
+        <section className="panel table-panel">
+          <div className="panel-head">
+            <h2>Listado</h2>
+            <span className="badge">{categories.length} categorías</span>
+          </div>
           <ul className="plain-list dense">
             {categories.map((c) => (
               <li key={c.id}>

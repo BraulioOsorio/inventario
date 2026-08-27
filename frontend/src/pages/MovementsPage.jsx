@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import {
+  Alert,
+  FormActions,
+  FormCard,
+  FormField,
+  FormRow,
+  PageHeader,
+} from "../components/ui";
 
 export default function MovementsPage() {
   const { token } = useAuth();
@@ -29,7 +37,7 @@ export default function MovementsPage() {
     try {
       await api.createMovement(token, { ...form, quantity: Number(form.quantity) });
       setForm({ product_id: "", movement_type: "in", quantity: 1, note: "" });
-      setOk("Movimiento registrado.");
+      setOk("Movimiento registrado correctamente.");
       await load();
     } catch (err) {
       setError(err.message);
@@ -39,46 +47,56 @@ export default function MovementsPage() {
   }
 
   return (
-    <div className="page">
-      <header className="page-head">
-        <div>
-          <p className="kicker">Operaciones</p>
-          <h1>Movimientos</h1>
-          <p className="sub">Entradas, salidas y ajustes con trazabilidad.</p>
-        </div>
-      </header>
+    <div className="page page-module">
+      <PageHeader
+        kicker="Operaciones"
+        title="Movimientos"
+        subtitle="Entradas, salidas y ajustes con trazabilidad."
+      />
 
-      {(error || ok) && <div className={`alert ${error ? "error" : "success"}`}>{error || ok}</div>}
+      {error && <Alert type="error">{error}</Alert>}
+      {ok && <Alert type="success">{ok}</Alert>}
 
-      <div className="split-2">
-        <form className="panel form-panel" onSubmit={onSubmit}>
-          <h2>Nuevo movimiento</h2>
-          <label>Producto
+      <div className="module-split">
+        <FormCard
+          title="Nuevo movimiento"
+          subtitle="Registra cambios de stock y deja una nota de referencia."
+          onSubmit={onSubmit}
+          className="form-narrow"
+        >
+          <FormField label="Producto" required>
             <select required value={form.product_id} onChange={(e) => setForm({ ...form, product_id: e.target.value })}>
-              <option value="">Selecciona…</option>
+              <option value="">Selecciona un producto…</option>
               {products.map((p) => (
-                <option key={p.id} value={p.id}>{p.name} ({p.quantity})</option>
+                <option key={p.id} value={p.id}>{p.name} — stock: {p.quantity}</option>
               ))}
             </select>
-          </label>
-          <div className="grid-2">
-            <label>Tipo
+          </FormField>
+          <FormRow cols={2}>
+            <FormField label="Tipo de movimiento">
               <select value={form.movement_type} onChange={(e) => setForm({ ...form, movement_type: e.target.value })}>
-                <option value="in">Entrada</option>
-                <option value="out">Salida</option>
-                <option value="adjust">Ajuste</option>
+                <option value="in">Entrada (+)</option>
+                <option value="out">Salida (−)</option>
+                <option value="adjust">Ajuste (=)</option>
               </select>
-            </label>
-            <label>Cantidad
+            </FormField>
+            <FormField label="Cantidad" required>
               <input type="number" min="1" required value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
-            </label>
-          </div>
-          <label>Nota<input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
-          <button className="btn-primary" disabled={busy}>Registrar</button>
-        </form>
+            </FormField>
+          </FormRow>
+          <FormField label="Nota" hint="Opcional — motivo o referencia">
+            <input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Ej. Compra proveedor #123" />
+          </FormField>
+          <FormActions>
+            <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Registrando…" : "Registrar movimiento"}</button>
+          </FormActions>
+        </FormCard>
 
-        <section className="panel">
-          <div className="panel-head"><h2>Historial</h2></div>
+        <section className="panel table-panel">
+          <div className="panel-head">
+            <h2>Historial</h2>
+            <span className="badge">{movements.length} movimientos</span>
+          </div>
           <div className="table-wrap">
             <table>
               <thead>
@@ -98,7 +116,9 @@ export default function MovementsPage() {
                     <td>{new Date(m.created_at).toLocaleString("es-CO")}</td>
                   </tr>
                 ))}
-                {!movements.length && <tr><td colSpan={4} className="muted">Sin movimientos.</td></tr>}
+                {!movements.length && (
+                  <tr><td colSpan={4} className="muted cell-empty">Sin movimientos registrados.</td></tr>
+                )}
               </tbody>
             </table>
           </div>

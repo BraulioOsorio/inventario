@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import {
+  Alert,
+  FormActions,
+  FormCard,
+  FormField,
+  FormRow,
+  PageHeader,
+} from "../components/ui";
 
 export default function UsersPage() {
   const { token } = useAuth();
@@ -26,7 +34,7 @@ export default function UsersPage() {
     try {
       await api.createUser(token, form);
       setForm({ full_name: "", email: "", password: "", is_admin: false });
-      setOk("Usuario creado.");
+      setOk("Usuario creado correctamente.");
       await load();
     } catch (err) {
       setError(err.message);
@@ -45,34 +53,48 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="page">
-      <header className="page-head">
-        <div>
-          <p className="kicker">Seguridad</p>
-          <h1>Usuarios</h1>
-          <p className="sub">Solo administradores pueden crear y activar cuentas.</p>
-        </div>
-      </header>
+    <div className="page page-module">
+      <PageHeader
+        kicker="Seguridad"
+        title="Usuarios"
+        subtitle="Solo administradores pueden crear y activar cuentas."
+      />
 
-      {(error || ok) && <div className={`alert ${error ? "error" : "success"}`}>{error || ok}</div>}
+      {error && <Alert type="error">{error}</Alert>}
+      {ok && <Alert type="success">{ok}</Alert>}
 
-      <div className="split-2">
-        <form className="panel form-panel" onSubmit={onSubmit}>
-          <h2>Crear usuario</h2>
-          <label>Nombre<input required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></label>
-          <label>Correo<input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
-          <label>Contraseña<input type="password" required minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></label>
-          <label>Rol
+      <div className="module-split">
+        <FormCard
+          title="Crear usuario"
+          subtitle="La contraseña se almacena encriptada en la base de datos."
+          onSubmit={onSubmit}
+          className="form-narrow"
+        >
+          <FormField label="Nombre completo" required>
+            <input required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="Nombre y apellido" />
+          </FormField>
+          <FormField label="Correo electrónico" required>
+            <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="usuario@correo.com" />
+          </FormField>
+          <FormField label="Contraseña" required hint="Mínimo 6 caracteres">
+            <input type="password" required minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••••" />
+          </FormField>
+          <FormField label="Rol del usuario">
             <select value={form.is_admin ? "admin" : "user"} onChange={(e) => setForm({ ...form, is_admin: e.target.value === "admin" })}>
-              <option value="user">Usuario</option>
+              <option value="user">Usuario estándar</option>
               <option value="admin">Administrador</option>
             </select>
-          </label>
-          <button className="btn-primary" disabled={busy}>Crear</button>
-        </form>
+          </FormField>
+          <FormActions>
+            <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Creando…" : "Crear usuario"}</button>
+          </FormActions>
+        </FormCard>
 
-        <section className="panel">
-          <div className="panel-head"><h2>Directorio</h2></div>
+        <section className="panel table-panel">
+          <div className="panel-head">
+            <h2>Directorio</h2>
+            <span className="badge">{users.length} usuarios</span>
+          </div>
           <div className="table-wrap">
             <table>
               <thead>
@@ -89,10 +111,10 @@ export default function UsersPage() {
                   <tr key={u.id}>
                     <td>{u.full_name}</td>
                     <td>{u.email}</td>
-                    <td>{u.is_admin ? "Admin" : "Usuario"}</td>
-                    <td>{u.is_active ? "Activo" : "Inactivo"}</td>
+                    <td><span className={`badge ${u.is_admin ? "admin" : "soft"}`}>{u.is_admin ? "Admin" : "Usuario"}</span></td>
+                    <td><span className={`badge ${u.is_active ? "ok" : "muted-badge"}`}>{u.is_active ? "Activo" : "Inactivo"}</span></td>
                     <td>
-                      <button type="button" className="btn-secondary" onClick={() => toggle(u)}>
+                      <button type="button" className="btn-secondary btn-sm" onClick={() => toggle(u)}>
                         {u.is_active ? "Desactivar" : "Activar"}
                       </button>
                     </td>
