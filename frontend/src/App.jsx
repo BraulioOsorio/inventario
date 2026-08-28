@@ -5,6 +5,7 @@ import ProductsPage from "./pages/ProductsPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import MovementsPage from "./pages/MovementsPage";
 import UsersPage from "./pages/UsersPage";
+import AlertsPage from "./pages/AlertsPage";
 import AppLayout, { RequireAuth } from "./layout/AppLayout";
 import { useAuth } from "./auth";
 
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="productos" element={<ProductsPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
         <Route path="movimientos" element={<MovementsPage />} />
+        <Route path="alertas" element={<AlertsPage />} />
         <Route
           path="usuarios"
           element={

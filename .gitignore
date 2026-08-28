@@ -37,7 +37,7 @@ htmlcov/
 .tmp/
 temp/
 
-# Informes académicos (fuera del repo / no versionar)
+# Informes acadï¿½micos (fuera del repo / no versionar)
 docs/
 *.pdf
 Entregables*/

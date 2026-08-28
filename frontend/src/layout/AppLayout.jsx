@@ -1,17 +1,19 @@
 import { NavLink, Outlet, Navigate, Link } from "react-router-dom";
 import { useAuth } from "../auth";
+import ModuleTopbar from "./ModuleTopbar";
 
 const QUICK = [
   { to: "/productos", label: "Productos", tone: "blue" },
-  { to: "/categorias", label: "Categorías", tone: "teal" },
-  { to: "/movimientos", label: "Movimientos", tone: "orange" },
+  { to: "/alertas", label: "Alertas", tone: "orange" },
+  { to: "/movimientos", label: "Movimientos", tone: "teal" },
 ];
 
 const NAV = [
-  { to: "/", label: "Resumen", end: true },
-  { to: "/productos", label: "Catálogo" },
-  { to: "/categorias", label: "Clasificación" },
-  { to: "/movimientos", label: "Operaciones" },
+  { to: "/", label: "Resumen", end: true, icon: "◉" },
+  { to: "/productos", label: "Catálogo", icon: "▦" },
+  { to: "/categorias", label: "Clasificación", icon: "◎" },
+  { to: "/alertas", label: "Alertas", icon: "!" },
+  { to: "/movimientos", label: "Operaciones", icon: "↕" },
 ];
 
 export default function AppLayout() {
@@ -55,11 +57,13 @@ export default function AppLayout() {
               end={item.end}
               className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}
             >
+              <span className="nav-icon" aria-hidden>{item.icon}</span>
               {item.label}
             </NavLink>
           ))}
           {user?.is_admin && (
             <NavLink to="/usuarios" className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}>
+              <span className="nav-icon" aria-hidden>⚙</span>
               Administración
             </NavLink>
           )}
@@ -80,6 +84,7 @@ export default function AppLayout() {
       </aside>
 
       <div className="erp-main">
+        <ModuleTopbar />
         <Outlet />
       </div>
     </div>

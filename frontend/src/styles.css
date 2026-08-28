@@ -697,3 +697,309 @@ tbody tr:hover { background: #f8fafc; }
   .kpi-grid { grid-template-columns: 1fr; }
   .quick-side { grid-template-columns: 1fr; }
 }
+
+/* ─── Mejoras UI (organización tipo ERP) ─── */
+.erp-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg);
+}
+
+.module-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.5rem;
+  background: linear-gradient(135deg, #1a3358 0%, #243f6b 100%);
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
+}
+.module-topbar h1 {
+  font-size: 1.15rem;
+  font-family: "Manrope", system-ui, sans-serif;
+  font-weight: 700;
+  margin: 0;
+  color: #fff;
+}
+.module-section {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.75;
+  margin-bottom: 0.15rem;
+}
+.module-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+.module-user-chip,
+.module-date {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.nav-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: #eef2f8;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+.nav-item.active .nav-icon {
+  background: #d9e6ff;
+  color: var(--blue);
+}
+
+.data-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+  box-shadow: var(--shadow);
+}
+.data-toolbar-main {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  flex: 1;
+}
+.data-toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.toolbar-hint {
+  color: var(--muted);
+  font-size: 0.88rem;
+  padding: 0.35rem 0;
+}
+
+.filter-chips {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-chip {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.filter-chip.active {
+  background: var(--blue-soft);
+  border-color: #c9daff;
+  color: #1d4fbf;
+}
+
+.panel-elevated {
+  box-shadow: var(--shadow-lg);
+}
+
+.table-erp thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.table-erp tbody tr:nth-child(even) {
+  background: #fafbfd;
+}
+
+.status-dot {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.status-dot.critical { background: #fce8e8; color: var(--danger); }
+.status-dot.low { background: #fff1df; color: var(--warn); }
+.status-dot.ok { background: #e7f6ee; color: var(--ok); }
+
+.tiny { font-size: 0.78rem; }
+
+.kpi-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.valuation-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+.valuation-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.valuation-head span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+.valuation-head strong {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.55rem;
+  color: var(--ink);
+}
+.valuation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+.valuation-grid > div {
+  background: var(--bg);
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  padding: 0.55rem 0.65rem;
+}
+.valuation-grid small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  margin-bottom: 0.15rem;
+}
+.valuation-grid strong {
+  font-size: 1rem;
+}
+
+.dash-grid-home {
+  grid-template-columns: 1.2fr 0.8fr 1fr;
+}
+.dash-grid-home .span-2 {
+  grid-column: span 2;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 30, 45, 0.45);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+.modal-card {
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--panel);
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 60px rgba(20, 30, 45, 0.22);
+}
+.modal-card.modal-wide {
+  width: min(720px, 100%);
+}
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem 0.75rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.modal-head h2 {
+  font-size: 1.15rem;
+  font-family: "Fraunces", Georgia, serif;
+}
+.modal-head p {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.modal-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--muted);
+}
+.modal-body {
+  padding: 0.25rem 0 0.5rem;
+}
+.modal-form.form-card {
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+.modal-form .form-card-body {
+  padding-top: 0.75rem;
+}
+.modal-form .form-actions {
+  padding: 0.85rem 1.15rem 1.15rem;
+  margin: 0;
+}
+
+.form-tabs {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.75rem 1.15rem 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.form-tabs button {
+  border: 0;
+  background: transparent;
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px 10px 0 0;
+  font-weight: 700;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+}
+.form-tabs button.active {
+  color: var(--blue);
+  background: var(--blue-soft);
+  border-bottom-color: var(--blue);
+}
+
+@media (max-width: 1100px) {
+  .dash-grid-home { grid-template-columns: 1fr 1fr; }
+  .dash-grid-home .span-2 { grid-column: span 2; }
+  .kpi-grid-3 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .module-topbar { padding: 0.75rem 1rem; }
+  .dash-grid-home { grid-template-columns: 1fr; }
+  .dash-grid-home .span-2 { grid-column: auto; }
+  .data-toolbar { flex-direction: column; align-items: stretch; }
+  .valuation-grid { grid-template-columns: 1fr; }
+}

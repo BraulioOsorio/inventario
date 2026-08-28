@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
-import { Alert, EmptyState, KpiCard, PageHeader, Panel } from "../components/ui";
+import { Alert, EmptyState, KpiCard, PageHeader, Panel, ValuationCard } from "../components/ui";
 
 const CONTEXT_COLORS = {
   tienda: "#2f6fed",
@@ -37,6 +37,44 @@ function ContextBars({ products }) {
           </div>
           <div className="bar-track">
             <div className="bar-fill" style={{ width: `${row.pct}%`, background: row.color }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TopMovers({ movements, products }) {
+  const rows = useMemo(() => {
+    const counts = {};
+    movements.forEach((m) => {
+      counts[m.product_id] = (counts[m.product_id] || 0) + Number(m.quantity);
+    });
+    return Object.entries(counts)
+      .map(([id, qty]) => {
+        const product = products.find((p) => String(p.id) === String(id));
+        return { id, name: product?.name || `Producto #${id}`, qty };
+      })
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+  }, [movements, products]);
+
+  const max = rows[0]?.qty || 1;
+
+  if (!rows.length) {
+    return <EmptyState title="Sin actividad" text="Aún no hay movimientos para mostrar tendencias." />;
+  }
+
+  return (
+    <div className="bar-list">
+      {rows.map((row) => (
+        <div key={row.id} className="bar-row">
+          <div className="bar-meta">
+            <strong>{row.name}</strong>
+            <span>{row.qty} und movidas</span>
+          </div>
+          <div className="bar-track">
+            <div className="bar-fill" style={{ width: `${Math.round((row.qty / max) * 100)}%`, background: "var(--blue)" }} />
           </div>
         </div>
       ))}
@@ -97,110 +135,107 @@ export default function HomePage() {
   }, [token]);
 
   const lowItems = useMemo(() => products.filter((p) => p.low_stock), [products]);
+  const critical = useMemo(() => products.filter((p) => Number(p.quantity) <= 0), [products]);
   const units = useMemo(() => products.reduce((a, p) => a + Number(p.quantity || 0), 0), [products]);
   const value = useMemo(
     () => products.reduce((acc, p) => acc + Number(p.quantity) * Number(p.unit_price), 0),
     [products]
   );
-  const today = new Date().toLocaleDateString("es-CO", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
 
   return (
     <div className="page">
       <PageHeader
         title={`Bienvenido, ${user?.full_name?.split(" ")[0] || "usuario"}`}
-        subtitle="Resumen modular del inventario · escalable y listo para crecer."
-        actions={<div className="date-chip">{today}</div>}
+        subtitle="Vista general del inventario · indicadores, alertas y actividad reciente."
       />
 
       {error && <Alert>{error}</Alert>}
 
       <section className="kpi-grid">
-        <KpiCard label="Productos" value={products.length} hint="Ítems activos" icon="P" />
+        <KpiCard label="Productos activos" value={products.length} hint="Ítems en catálogo" icon="P" />
         <KpiCard label="Unidades en stock" value={units} hint="Cantidad total" icon="U" />
-        <KpiCard label="Stock bajo" value={lowItems.length} hint="Requieren atención" tone="warn" icon="!" />
-        <KpiCard label="Valor estimado" value={`$${value.toFixed(0)}`} hint="Cantidad × precio" icon="$" />
+        <KpiCard label="Alertas activas" value={lowItems.length + critical.length} hint="Bajo mínimo o agotados" tone="warn" icon="!" />
+        <KpiCard label="Movimientos" value={movements.length} hint="Registros históricos" icon="↕" />
       </section>
 
-      <section className="dash-grid">
+      <section className="dash-grid dash-grid-home">
         <Panel
-          title="Stock por contexto"
+          title="Distribución por contexto"
           action={<Link to="/productos" className="text-link">Ver catálogo</Link>}
           className="span-2"
         >
-          {products.length ? (
-            <ContextBars products={products} />
-          ) : (
+          {products.length ? <ContextBars products={products} /> : (
             <EmptyState
-              title="Todavía no hay productos"
-              text="Crea el primero para ver distribución por tienda, papelería o personal."
+              title="Sin productos"
+              text="Crea el primero para ver la distribución."
               action={<Link className="btn-primary" to="/productos">Ir a productos</Link>}
             />
           )}
         </Panel>
 
+        <ValuationCard units={units} value={value} products={products.length} />
+      </section>
+
+      <section className="dash-grid dash-grid-home">
+        <Panel title="Productos con más movimiento" action={<Link to="/movimientos" className="text-link">Ver historial</Link>}>
+          <TopMovers movements={movements} products={products} />
+        </Panel>
+
         <Panel title="Cobertura de categorías">
           <Donut products={products} categories={categories} />
         </Panel>
-      </section>
 
-      <section className="dash-grid">
-        <Panel title="Alertas de stock" action={<Link to="/productos" className="text-link">Ver todo</Link>}>
-          {lowItems.length ? (
+        <Panel title="Alertas prioritarias" action={<Link to="/alertas" className="text-link">Centro de alertas</Link>}>
+          {lowItems.length || critical.length ? (
             <ul className="plain-list">
-              {lowItems.slice(0, 6).map((p) => (
+              {[...critical, ...lowItems].slice(0, 5).map((p) => (
                 <li key={p.id}>
-                  <strong>{p.name}</strong>
+                  <div>
+                    <strong>{p.name}</strong>
+                    <div className="muted tiny">{Number(p.quantity) <= 0 ? "Agotado" : "Stock bajo"}</div>
+                  </div>
                   <span>{p.quantity} / mín {p.min_stock}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <EmptyState title="Sin alertas" text="Todo el stock está por encima del mínimo." />
-          )}
-        </Panel>
-
-        <Panel
-          title="Últimos movimientos"
-          action={<Link to="/movimientos" className="text-link">Abrir módulo</Link>}
-          className="span-2"
-        >
-          {movements.length ? (
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Tipo</th>
-                    <th>Cantidad</th>
-                    <th>Nota</th>
-                    <th>Fecha</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {movements.slice(0, 8).map((m) => (
-                    <tr key={m.id}>
-                      <td><span className={`pill ${m.movement_type}`}>{m.movement_type}</span></td>
-                      <td>{m.quantity}</td>
-                      <td>{m.note || "—"}</td>
-                      <td>{new Date(m.created_at).toLocaleString("es-CO")}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <EmptyState
-              title="Sin movimientos"
-              text="Registra una entrada o salida para comenzar la trazabilidad."
-              action={<Link className="btn-secondary" to="/movimientos">Registrar movimiento</Link>}
-            />
+            <EmptyState title="Sin alertas" text="Todo el stock está en rango." />
           )}
         </Panel>
       </section>
+
+      <Panel title="Últimos movimientos" action={<Link to="/movimientos" className="text-link">Abrir módulo</Link>}>
+        {movements.length ? (
+          <div className="table-wrap">
+            <table className="table-erp">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Cantidad</th>
+                  <th>Nota</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movements.slice(0, 6).map((m) => (
+                  <tr key={m.id}>
+                    <td><span className={`pill ${m.movement_type}`}>{m.movement_type}</span></td>
+                    <td>{m.quantity}</td>
+                    <td>{m.note || "—"}</td>
+                    <td>{new Date(m.created_at).toLocaleString("es-CO")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyState
+            title="Sin movimientos"
+            text="Registra entradas o salidas para iniciar la trazabilidad."
+            action={<Link className="btn-secondary" to="/movimientos">Registrar movimiento</Link>}
+          />
+        )}
+      </Panel>
     </div>
   );
 }

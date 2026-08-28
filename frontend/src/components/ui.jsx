@@ -25,7 +25,7 @@ export function Panel({ title, action, children, className = "" }) {
   );
 }
 
-export function FormCard({ title, subtitle, children, onSubmit, className = "" }) {
+export function FormCard({ title, subtitle, children, onSubmit, className = "", bare = false }) {
   return (
     <form className={`form-card ${className}`} onSubmit={onSubmit}>
       {(title || subtitle) && (
@@ -34,7 +34,7 @@ export function FormCard({ title, subtitle, children, onSubmit, className = "" }
           {subtitle && <p>{subtitle}</p>}
         </div>
       )}
-      <div className="form-card-body">{children}</div>
+      {bare ? children : <div className="form-card-body">{children}</div>}
     </form>
   );
 }
@@ -105,4 +105,84 @@ export function EmptyState({ title, text, action }) {
 
 export function Alert({ type = "error", children }) {
   return <div className={`alert ${type === "error" ? "error" : "success"}`}>{children}</div>;
+}
+
+export function Modal({ open, title, subtitle, onClose, children, wide = false }) {
+  if (!open) return null;
+  return (
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <div
+        className={`modal-card ${wide ? "modal-wide" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+      >
+        <div className="modal-head">
+          <div>
+            <h2 id="modal-title">{title}</h2>
+            {subtitle && <p>{subtitle}</p>}
+          </div>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">
+            ×
+          </button>
+        </div>
+        <div className="modal-body">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+export function FormTabs({ tabs, active, onChange }) {
+  return (
+    <div className="form-tabs" role="tablist">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          role="tab"
+          aria-selected={active === tab.id}
+          className={active === tab.id ? "active" : ""}
+          onClick={() => onChange(tab.id)}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function DataToolbar({ children, actions }) {
+  return (
+    <div className="data-toolbar">
+      <div className="data-toolbar-main">{children}</div>
+      {actions && <div className="data-toolbar-actions">{actions}</div>}
+    </div>
+  );
+}
+
+export function ValuationCard({ units, value, products }) {
+  const avg = products.length ? value / products.length : 0;
+  return (
+    <div className="valuation-card">
+      <div className="valuation-head">
+        <span>Valor del inventario</span>
+        <strong>${value.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong>
+      </div>
+      <div className="valuation-grid">
+        <div>
+          <small>Unidades</small>
+          <strong>{units}</strong>
+        </div>
+        <div>
+          <small>Productos</small>
+          <strong>{products}</strong>
+        </div>
+        <div>
+          <small>Promedio / ítem</small>
+          <strong>${avg.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong>
+        </div>
+      </div>
+    </div>
+  );
 }
