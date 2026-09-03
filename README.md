@@ -83,6 +83,13 @@ docker compose up --build
 2. Variables: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGINS` (URL del front), resto del `.env`
 3. **Static Site / Web (frontend):** build `npm run build`, publish `dist`, con `VITE_API_URL` = URL del backend
 
+**Rutas SPA (importante):** Si al entrar a `/login` o recargar `/productos` sale "Not Found", configura en Render → tu Static Site → **Redirects/Rewrites**:
+- Source: `/*`
+- Destination: `/index.html`
+- Action: **Rewrite**
+
+También el build incluye `public/_redirects` y `404.html` automático. Si usas Docker (`frontend/Dockerfile`), nginx ya redirige todas las rutas a `index.html`.
+
 ## Endpoints principales
 
 - `POST /api/auth/register`

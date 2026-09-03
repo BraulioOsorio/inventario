@@ -138,7 +138,7 @@ export default function ProductsPage() {
         </button>
       </DataToolbar>
 
-      <section className="panel table-panel panel-elevated">
+      <section className="panel table-panel panel-elevated glass-panel">
         <div className="panel-head">
           <h2>Listado de productos</h2>
           <span className="badge">{products.length} ítems</span>

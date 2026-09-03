@@ -90,7 +90,7 @@ export default function UsersPage() {
           </FormActions>
         </FormCard>
 
-        <section className="panel table-panel">
+        <section className="panel table-panel glass-panel">
           <div className="panel-head">
             <h2>Directorio</h2>
             <span className="badge">{users.length} usuarios</span>

@@ -1,0 +1,13 @@
+# Configuración Render — Inventario Modular
+# Si despliegas el frontend como Static Site, esto habilita rutas SPA (/login, /productos, etc.)
+
+services:
+  - type: web
+    name: inventario-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

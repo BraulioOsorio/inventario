@@ -13,7 +13,7 @@ export function PageHeader({ kicker, title, subtitle, actions }) {
 
 export function Panel({ title, action, children, className = "" }) {
   return (
-    <section className={`panel ${className}`}>
+    <section className={`panel glass-panel ${className}`}>
       {(title || action) && (
         <div className="panel-head">
           {title ? <h2>{title}</h2> : <span />}
@@ -82,7 +82,7 @@ export function Toolbar({ children }) {
 
 export function KpiCard({ label, value, hint, tone = "default", icon }) {
   return (
-    <article className={`kpi kpi-${tone}`}>
+    <article className={`kpi kpi-${tone} glass-panel`}>
       <div className="kpi-top">
         <span>{label}</span>
         {icon && <span className="kpi-icon" aria-hidden>{icon}</span>}
@@ -154,7 +154,7 @@ export function FormTabs({ tabs, active, onChange }) {
 
 export function DataToolbar({ children, actions }) {
   return (
-    <div className="data-toolbar">
+    <div className="data-toolbar glass-panel">
       <div className="data-toolbar-main">{children}</div>
       {actions && <div className="data-toolbar-actions">{actions}</div>}
     </div>
@@ -164,7 +164,7 @@ export function DataToolbar({ children, actions }) {
 export function ValuationCard({ units, value, products }) {
   const avg = products.length ? value / products.length : 0;
   return (
-    <div className="valuation-card">
+    <div className="valuation-card glass-panel">
       <div className="valuation-head">
         <span>Valor del inventario</span>
         <strong>${value.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong>

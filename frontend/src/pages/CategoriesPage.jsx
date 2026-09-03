@@ -63,7 +63,7 @@ export default function CategoriesPage() {
           </FormActions>
         </FormCard>
 
-        <section className="panel table-panel">
+        <section className="panel table-panel glass-panel">
           <div className="panel-head">
             <h2>Listado</h2>
             <span className="badge">{categories.length} categorías</span>

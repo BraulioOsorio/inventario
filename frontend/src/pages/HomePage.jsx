@@ -177,7 +177,7 @@ export default function HomePage() {
       </section>
 
       <section className="dash-grid dash-grid-home">
-        <Panel title="Productos con más movimiento" action={<Link to="/movimientos" className="text-link">Ver historial</Link>}>
+        <Panel title="Productos con más movimiento" action={<Link to="/movimientos" className="text-link">Punto de venta</Link>}>
           <TopMovers movements={movements} products={products} />
         </Panel>
 
@@ -232,7 +232,7 @@ export default function HomePage() {
           <EmptyState
             title="Sin movimientos"
             text="Registra entradas o salidas para iniciar la trazabilidad."
-            action={<Link className="btn-secondary" to="/movimientos">Registrar movimiento</Link>}
+            action={<Link className="btn-secondary" to="/movimientos">Ir al punto de venta</Link>}
           />
         )}
       </Panel>
