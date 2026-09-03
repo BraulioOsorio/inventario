@@ -869,3 +869,40 @@ body {
     grid-column: span 2;
   }
 }
+
+/* ─── Tablas glass (dashboard e historial) ─── */
+.page-dashboard .movements-panel,
+.glass-panel.table-panel {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.panel .table-wrap,
+.glass-panel .table-wrap {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.table-erp tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 12px;
+}
+.table-erp tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 12px;
+}
+
+.cell-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.cell-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

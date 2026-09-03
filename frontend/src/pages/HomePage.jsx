@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { Alert, EmptyState, KpiCard, PageHeader, Panel, ValuationCard } from "../components/ui";
+import { contextTypeLabel, movementTypeLabel } from "../utils/labels";
 
 const CONTEXT_COLORS = {
   tienda: "#2f6fed",
@@ -32,7 +33,7 @@ function ContextBars({ products }) {
       {data.map((row) => (
         <div key={row.key} className="bar-row">
           <div className="bar-meta">
-            <strong>{row.key}</strong>
+            <strong>{contextTypeLabel(row.key)}</strong>
             <span>{row.qty} und · {row.pct}%</span>
           </div>
           <div className="bar-track">
@@ -141,9 +142,16 @@ export default function HomePage() {
     () => products.reduce((acc, p) => acc + Number(p.quantity) * Number(p.unit_price), 0),
     [products]
   );
+  const productById = useMemo(() => {
+    const map = {};
+    products.forEach((p) => {
+      map[p.id] = p;
+    });
+    return map;
+  }, [products]);
 
   return (
-    <div className="page">
+    <div className="page page-dashboard">
       <PageHeader
         title={`Bienvenido, ${user?.full_name?.split(" ")[0] || "usuario"}`}
         subtitle="Vista general del inventario · indicadores, alertas y actividad reciente."
@@ -204,12 +212,17 @@ export default function HomePage() {
         </Panel>
       </section>
 
-      <Panel title="Últimos movimientos" action={<Link to="/movimientos" className="text-link">Abrir módulo</Link>}>
+      <Panel
+        title="Últimos movimientos"
+        action={<Link to="/movimientos" className="text-link">Abrir módulo</Link>}
+        className="movements-panel table-panel"
+      >
         {movements.length ? (
           <div className="table-wrap">
             <table className="table-erp">
               <thead>
                 <tr>
+                  <th>Producto</th>
                   <th>Tipo</th>
                   <th>Cantidad</th>
                   <th>Nota</th>
@@ -219,7 +232,12 @@ export default function HomePage() {
               <tbody>
                 {movements.slice(0, 6).map((m) => (
                   <tr key={m.id}>
-                    <td><span className={`pill ${m.movement_type}`}>{m.movement_type}</span></td>
+                    <td>{productById[m.product_id]?.name || "—"}</td>
+                    <td>
+                      <span className={`pill ${m.movement_type}`}>
+                        {movementTypeLabel(m.movement_type)}
+                      </span>
+                    </td>
                     <td>{m.quantity}</td>
                     <td>{m.note || "—"}</td>
                     <td>{new Date(m.created_at).toLocaleString("es-CO")}</td>

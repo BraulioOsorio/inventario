@@ -49,6 +49,18 @@ class ProductRepository:
         product.is_active = False
         self.db.commit()
 
+    def ids_with_movements(self, owner_id: UUID) -> set[UUID]:
+        rows = (
+            self.db.query(StockMovement.product_id)
+            .filter(StockMovement.owner_id == owner_id)
+            .distinct()
+            .all()
+        )
+        return {row[0] for row in rows}
+
+    def movement_count(self, product_id: UUID) -> int:
+        return self.db.query(StockMovement).filter(StockMovement.product_id == product_id).count()
+
 
 class MovementRepository:
     def __init__(self, db: Session):

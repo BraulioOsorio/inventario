@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { Alert, FormActions, FormCard, FormField, FormRow, PageHeader } from "../components/ui";
+import { movementTypeLabel } from "../utils/labels";
 
 const fmt = (n) =>
   Number(n || 0).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
@@ -218,7 +219,7 @@ export default function MovementsPage() {
             <div className="pos-search-wrap">
               <input
                 className="pos-search"
-                placeholder="Buscar producto por nombre o SKU…"
+                placeholder="Buscar producto por nombre o marca…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -391,7 +392,11 @@ export default function MovementsPage() {
                 {movements.map((m) => (
                   <tr key={m.id}>
                     <td>{byId[m.product_id]?.name || "—"}</td>
-                    <td><span className={`pill ${m.movement_type}`}>{m.movement_type}</span></td>
+                    <td>
+                      <span className={`pill ${m.movement_type}`}>
+                        {movementTypeLabel(m.movement_type)}
+                      </span>
+                    </td>
                     <td><strong>{m.quantity}</strong></td>
                     <td>{m.note || "—"}</td>
                     <td>{new Date(m.created_at).toLocaleString("es-CO")}</td>

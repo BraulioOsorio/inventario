@@ -50,14 +50,19 @@ class InventoryService:
         self.categories.delete(category)
 
     # --- Products ---
+    def _product_out(self, product, moved_ids: set | None = None) -> ProductOut:
+        out = ProductOut.model_validate(product)
+        out.low_stock = product.quantity <= product.min_stock
+        if moved_ids is not None:
+            out.has_movements = product.id in moved_ids
+        else:
+            out.has_movements = self.products.movement_count(product.id) > 0
+        return out
+
     def list_products(self, user: User, context_type: str | None = None, q: str | None = None) -> list[ProductOut]:
         items = self.products.list_by_owner(user.id, context_type=context_type, q=q)
-        result: list[ProductOut] = []
-        for item in items:
-            out = ProductOut.model_validate(item)
-            out.low_stock = item.quantity <= item.min_stock
-            result.append(out)
-        return result
+        moved_ids = self.products.ids_with_movements(user.id)
+        return [self._product_out(item, moved_ids) for item in items]
 
     def create_product(self, user: User, payload: ProductCreate) -> ProductOut:
         if payload.category_id and not self.categories.get(payload.category_id, user.id):
@@ -65,10 +70,8 @@ class InventoryService:
         try:
             product = self.products.create(user.id, **payload.model_dump())
         except Exception as exc:
-            raise HTTPException(status_code=400, detail="No se pudo crear el producto (¿SKU duplicado?)") from exc
-        out = ProductOut.model_validate(product)
-        out.low_stock = product.quantity <= product.min_stock
-        return out
+            raise HTTPException(status_code=400, detail="No se pudo crear el producto") from exc
+        return self._product_out(product, set())
 
     def update_product(self, user: User, product_id: UUID, payload: ProductUpdate) -> ProductOut:
         product = self.products.get(product_id, user.id)
@@ -79,14 +82,17 @@ class InventoryService:
             if not self.categories.get(data["category_id"], user.id):
                 raise HTTPException(status_code=400, detail="Categoría inválida")
         updated = self.products.update(product, **data)
-        out = ProductOut.model_validate(updated)
-        out.low_stock = updated.quantity <= updated.min_stock
-        return out
+        return self._product_out(updated)
 
     def delete_product(self, user: User, product_id: UUID) -> None:
         product = self.products.get(product_id, user.id)
         if not product:
             raise HTTPException(status_code=404, detail="Producto no encontrado")
+        if self.products.movement_count(product.id) > 0:
+            raise HTTPException(
+                status_code=400,
+                detail="No se puede eliminar: el producto tiene movimientos registrados",
+            )
         self.products.soft_delete(product)
 
     # --- Movements ---

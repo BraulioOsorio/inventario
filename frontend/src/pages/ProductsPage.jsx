@@ -13,6 +13,7 @@ import {
   Modal,
   PageHeader,
 } from "../components/ui";
+import { contextTypeLabel, formatMoney } from "../utils/labels";
 
 const empty = {
   name: "",
@@ -36,6 +37,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(empty);
+  const [editingId, setEditingId] = useState(null);
   const [context, setContext] = useState("");
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
@@ -58,23 +60,62 @@ export default function ProductsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, context]);
 
+  function openCreate() {
+    setForm(empty);
+    setEditingId(null);
+    setTab("general");
+    setOpenForm(true);
+  }
+
+  function openEdit(product) {
+    setForm({
+      name: product.name,
+      sku: product.sku,
+      description: product.description || "",
+      unit: product.unit,
+      quantity: product.quantity,
+      min_stock: product.min_stock,
+      unit_price: product.unit_price,
+      context_type: product.context_type,
+      category_id: product.category_id || "",
+    });
+    setEditingId(product.id);
+    setTab("general");
+    setOpenForm(true);
+  }
+
   async function onSubmit(e) {
     e.preventDefault();
     setBusy(true);
     setError("");
     setOk("");
     try {
-      await api.createProduct(token, {
-        ...form,
-        quantity: Number(form.quantity),
+      const payload = {
+        name: form.name,
+        sku: form.sku,
+        description: form.description || null,
+        unit: form.unit,
         min_stock: Number(form.min_stock),
         unit_price: Number(form.unit_price),
+        context_type: form.context_type,
         category_id: form.category_id || null,
-      });
+      };
+
+      if (editingId) {
+        await api.updateProduct(token, editingId, payload);
+        setOk("Producto actualizado correctamente.");
+      } else {
+        await api.createProduct(token, {
+          ...payload,
+          quantity: Number(form.quantity),
+        });
+        setOk("Producto guardado correctamente.");
+      }
+
       setForm(empty);
+      setEditingId(null);
       setOpenForm(false);
       setTab("general");
-      setOk("Producto guardado correctamente.");
       await load();
     } catch (err) {
       setError(err.message);
@@ -87,6 +128,7 @@ export default function ProductsPage() {
     if (!confirm("¿Eliminar producto?")) return;
     try {
       await api.deleteProduct(token, id);
+      setOk("Producto eliminado.");
       await load();
     } catch (err) {
       setError(err.message);
@@ -95,6 +137,8 @@ export default function ProductsPage() {
 
   function closeModal() {
     setOpenForm(false);
+    setEditingId(null);
+    setForm(empty);
     setTab("general");
   }
 
@@ -111,7 +155,7 @@ export default function ProductsPage() {
 
       <DataToolbar
         actions={
-          <button type="button" className="btn-primary btn-sm" onClick={() => setOpenForm(true)}>
+          <button type="button" className="btn-primary btn-sm" onClick={openCreate}>
             + Adicionar
           </button>
         }
@@ -127,7 +171,7 @@ export default function ProductsPage() {
         </FormField>
         <FormField label="Buscar producto" className="toolbar-field grow">
           <input
-            placeholder="Nombre o SKU"
+            placeholder="Nombre o marca"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && load().catch((err) => setError(err.message))}
@@ -148,7 +192,7 @@ export default function ProductsPage() {
             <thead>
               <tr>
                 <th>Nombre</th>
-                <th>Referencia</th>
+                <th>Marca</th>
                 <th>Contexto</th>
                 <th>Existencias</th>
                 <th>Mín.</th>
@@ -161,15 +205,26 @@ export default function ProductsPage() {
                 <tr key={p.id} className={p.low_stock ? "row-warn" : ""}>
                   <td><strong>{p.name}</strong></td>
                   <td><code>{p.sku}</code></td>
-                  <td><span className="badge soft">{p.context_type}</span></td>
+                  <td><span className="badge soft">{contextTypeLabel(p.context_type)}</span></td>
                   <td>
                     {p.quantity} {p.unit}
-                    {p.low_stock && <span className="pill out">bajo</span>}
+                    {p.low_stock && <span className="pill out">Bajo</span>}
                   </td>
                   <td>{p.min_stock}</td>
-                  <td>${Number(p.unit_price).toLocaleString("es-CO")}</td>
-                  <td>
-                    <button type="button" className="btn-danger-ghost btn-sm" onClick={() => onDelete(p.id)}>Eliminar</button>
+                  <td>{formatMoney(p.unit_price)}</td>
+                  <td className="cell-actions">
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => openEdit(p)}>
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-danger-ghost btn-sm"
+                      onClick={() => onDelete(p.id)}
+                      disabled={p.has_movements}
+                      title={p.has_movements ? "Tiene movimientos registrados" : "Eliminar producto"}
+                    >
+                      Eliminar
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -184,7 +239,7 @@ export default function ProductsPage() {
       <Modal
         open={openForm}
         onClose={closeModal}
-        title="Adicionar producto"
+        title={editingId ? "Editar producto" : "Adicionar producto"}
         subtitle="Completa la información del ítem. Los campos con * son obligatorios."
         wide
       >
@@ -197,8 +252,8 @@ export default function ProductsPage() {
                 <FormField label="Nombre" required>
                   <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ej. Cuaderno A4" />
                 </FormField>
-                <FormField label="SKU / Referencia" required>
-                  <input required value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="SKU-001" />
+                <FormField label="Marca" required>
+                  <input required value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Ej. Norma, BIC…" />
                 </FormField>
               </FormRow>
               <FormRow cols={2}>
@@ -228,17 +283,33 @@ export default function ProductsPage() {
           {tab === "stock" && (
             <div className="form-card-body">
               <FormSection title="Existencias y precio">
-                <FormRow cols={3}>
-                  <FormField label="Cantidad inicial">
-                    <input type="number" min="0" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
+                {editingId ? (
+                  <FormField label="Stock actual" hint="Modifica el stock desde Punto de venta o Entrada">
+                    <input type="number" value={form.quantity} readOnly disabled />
                   </FormField>
-                  <FormField label="Stock mínimo" hint="Genera alerta">
-                    <input type="number" min="0" value={form.min_stock} onChange={(e) => setForm({ ...form, min_stock: e.target.value })} />
-                  </FormField>
-                  <FormField label="Precio unitario">
-                    <input type="number" min="0" step="0.01" value={form.unit_price} onChange={(e) => setForm({ ...form, unit_price: e.target.value })} />
-                  </FormField>
-                </FormRow>
+                ) : (
+                  <FormRow cols={3}>
+                    <FormField label="Cantidad inicial">
+                      <input type="number" min="0" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
+                    </FormField>
+                    <FormField label="Stock mínimo" hint="Genera alerta">
+                      <input type="number" min="0" value={form.min_stock} onChange={(e) => setForm({ ...form, min_stock: e.target.value })} />
+                    </FormField>
+                    <FormField label="Precio unitario">
+                      <input type="number" min="0" step="0.01" value={form.unit_price} onChange={(e) => setForm({ ...form, unit_price: e.target.value })} />
+                    </FormField>
+                  </FormRow>
+                )}
+                {editingId && (
+                  <FormRow cols={2}>
+                    <FormField label="Stock mínimo" hint="Genera alerta">
+                      <input type="number" min="0" value={form.min_stock} onChange={(e) => setForm({ ...form, min_stock: e.target.value })} />
+                    </FormField>
+                    <FormField label="Precio unitario">
+                      <input type="number" min="0" step="0.01" value={form.unit_price} onChange={(e) => setForm({ ...form, unit_price: e.target.value })} />
+                    </FormField>
+                  </FormRow>
+                )}
                 <FormField label="Unidad de medida">
                   <input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} placeholder="unidad, caja, paquete…" />
                 </FormField>
@@ -248,7 +319,9 @@ export default function ProductsPage() {
 
           <FormActions>
             <button type="button" className="btn-secondary" onClick={closeModal}>Cancelar</button>
-            <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Guardando…" : "Adicionar producto"}</button>
+            <button type="submit" className="btn-primary" disabled={busy}>
+              {busy ? "Guardando…" : editingId ? "Guardar cambios" : "Adicionar producto"}
+            </button>
           </FormActions>
         </FormCard>
       </Modal>

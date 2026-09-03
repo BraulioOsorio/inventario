@@ -20,6 +20,7 @@ def migrate_schema() -> None:
                 """
             )
         )
+        conn.execute(text("ALTER TABLE products DROP CONSTRAINT IF EXISTS uq_product_owner_sku"))
 
 
 def seed_admin() -> None:

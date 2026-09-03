@@ -105,6 +105,7 @@ class ProductOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     low_stock: bool = False
+    has_movements: bool = False
 
     model_config = {"from_attributes": True}
 
