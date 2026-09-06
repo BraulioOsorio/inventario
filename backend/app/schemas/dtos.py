@@ -47,6 +47,25 @@ class TokenOut(BaseModel):
     user: UserOut
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ForgotPasswordResponse(BaseModel):
+    message: str
+    email_sent: bool = False
+    reset_link: str | None = None
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=10)
+    new_password: str = Field(min_length=6, max_length=128)
+
+
+class SimpleMessageResponse(BaseModel):
+    message: str
+
+
 class CategoryCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     description: str | None = None
@@ -126,3 +145,146 @@ class MovementOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# --- Clientes (Customer) ---
+class CustomerCreate(BaseModel):
+    full_name: str = Field(min_length=2, max_length=200)
+    document_id: str | None = Field(default=None, max_length=60)
+    email: str | None = None
+    phone: str | None = Field(default=None, max_length=60)
+    address: str | None = Field(default=None, max_length=255)
+    notes: str | None = None
+
+
+class CustomerUpdate(BaseModel):
+    full_name: str | None = Field(default=None, min_length=2, max_length=200)
+    document_id: str | None = Field(default=None, max_length=60)
+    email: str | None = None
+    phone: str | None = Field(default=None, max_length=60)
+    address: str | None = Field(default=None, max_length=255)
+    notes: str | None = None
+    is_active: bool | None = None
+
+
+class CustomerOut(BaseModel):
+    id: UUID
+    full_name: str
+    document_id: str | None
+    email: str | None
+    phone: str | None
+    address: str | None
+    notes: str | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# --- Pedidos / Órdenes a Proveedores (SupplierOrder) ---
+class SupplierOrderCreate(BaseModel):
+    supplier_name: str = Field(min_length=2, max_length=200)
+    supplier_contact: str | None = Field(default=None, max_length=120)
+    title: str = Field(min_length=2, max_length=200)
+    items_summary: str | None = None
+    expected_date: datetime | None = None
+    is_monthly_recurring: bool = False
+    monthly_day: int | None = Field(default=None, ge=1, le=31)
+    estimated_total: float = Field(default=0, ge=0)
+    status: str = Field(default="pendiente", pattern="^(pendiente|solicitado|recibido|cancelado)$")
+    notes: str | None = None
+
+
+class SupplierOrderUpdate(BaseModel):
+    supplier_name: str | None = Field(default=None, min_length=2, max_length=200)
+    supplier_contact: str | None = Field(default=None, max_length=120)
+    title: str | None = Field(default=None, min_length=2, max_length=200)
+    items_summary: str | None = None
+    expected_date: datetime | None = None
+    is_monthly_recurring: bool | None = None
+    monthly_day: int | None = Field(default=None, ge=1, le=31)
+    estimated_total: float | None = Field(default=None, ge=0)
+    status: str | None = Field(default=None, pattern="^(pendiente|solicitado|recibido|cancelado)$")
+    notes: str | None = None
+
+
+class SupplierOrderOut(BaseModel):
+    id: UUID
+    supplier_name: str
+    supplier_contact: str | None
+    title: str
+    items_summary: str | None
+    expected_date: datetime | None
+    is_monthly_recurring: bool
+    monthly_day: int | None
+    estimated_total: float
+    status: str
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+    is_due_soon: bool = False  # Próximo a vencer / realizarse en <= 7 días
+
+    model_config = {"from_attributes": True}
+
+
+# --- Préstamos (Loan) ---
+class LoanCreate(BaseModel):
+    product_id: UUID
+    customer_id: UUID | None = None
+    borrower_name: str = Field(min_length=2, max_length=200)
+    borrower_contact: str | None = Field(default=None, max_length=120)
+    quantity: int = Field(default=1, gt=0)
+    due_date: datetime | None = None
+    notes: str | None = None
+    discount_stock: bool = True  # Descuenta unidades del stock activo mientras esté prestado
+
+
+class LoanUpdate(BaseModel):
+    borrower_name: str | None = Field(default=None, min_length=2, max_length=200)
+    borrower_contact: str | None = Field(default=None, max_length=120)
+    due_date: datetime | None = None
+    status: str | None = Field(default=None, pattern="^(activo|devuelto|vencido)$")
+    notes: str | None = None
+
+
+class LoanReturnRequest(BaseModel):
+    return_to_stock: bool = True  # Si se devuelven las unidades prestadas al stock
+    notes: str | None = None
+
+
+class LoanOut(BaseModel):
+    id: UUID
+    product_id: UUID
+    product_name: str | None = None
+    customer_id: UUID | None
+    customer_name: str | None = None
+    borrower_name: str
+    borrower_contact: str | None
+    quantity: int
+    loan_date: datetime
+    due_date: datetime | None
+    returned_date: datetime | None
+    status: str
+    notes: str | None
+    created_at: datetime
+    is_overdue: bool = False
+
+    model_config = {"from_attributes": True}
+
+
+# --- Notificaciones Globales / Campanita ---
+class NotificationItem(BaseModel):
+    id: str
+    category: str  # "stock" | "order" | "loan"
+    title: str
+    message: str
+    date: datetime | None = None
+    severity: str  # "danger" | "warn" | "info"
+    link: str
+    extra: dict | None = None
+
+
+class NotificationsSummary(BaseModel):
+    total_unread: int
+    items: list[NotificationItem]

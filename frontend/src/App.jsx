@@ -1,9 +1,13 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import HomePage from "./pages/HomePage";
 import ProductsPage from "./pages/ProductsPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import MovementsPage from "./pages/MovementsPage";
+import OrdersPage from "./pages/OrdersPage";
+import LoansPage from "./pages/LoansPage";
+import CustomersPage from "./pages/CustomersPage";
 import UsersPage from "./pages/UsersPage";
 import AlertsPage from "./pages/AlertsPage";
 import AppLayout, { RequireAuth } from "./layout/AppLayout";
@@ -19,6 +23,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/recuperar-contrasena" element={<ResetPasswordPage />} />
       <Route
         path="/"
         element={
@@ -29,6 +34,9 @@ export default function App() {
       >
         <Route index element={<HomePage />} />
         <Route path="productos" element={<ProductsPage />} />
+        <Route path="pedidos" element={<OrdersPage />} />
+        <Route path="prestamos" element={<LoansPage />} />
+        <Route path="clientes" element={<CustomersPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
         <Route path="movimientos" element={<MovementsPage />} />
         <Route path="alertas" element={<AlertsPage />} />

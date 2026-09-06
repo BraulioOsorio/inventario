@@ -43,6 +43,15 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = ""
     ADMIN_FULL_NAME: str = "Braulio Osorio Martinez"
 
+    # Configuración de Correo / SMTP para recuperación de contraseña
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = ""
+    SMTP_TLS: bool = True
+    FRONTEND_URL: str = "https://inventario-web-7qyp.onrender.com"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

@@ -38,3 +38,19 @@ def safe_decode(token: str) -> dict[str, Any]:
         return decode_access_token(token)
     except JWTError as exc:
         raise TokenError("Token inválido o expirado") from exc
+
+
+def create_password_reset_token(email: str, expire_minutes: int = 30) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)
+    payload = {"sub": email.lower().strip(), "purpose": "reset_password", "exp": expire}
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
+def verify_password_reset_token(token: str) -> str | None:
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        if payload.get("purpose") != "reset_password":
+            return None
+        return payload.get("sub")
+    except JWTError:
+        return None

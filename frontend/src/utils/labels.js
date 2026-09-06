@@ -28,3 +28,24 @@ export function formatMoney(value) {
     maximumFractionDigits: 0,
   });
 }
+
+export const ORDER_STATUS = {
+  pendiente: { label: "Pendiente", className: "pill-warn" },
+  solicitado: { label: "Solicitado", className: "pill-blue" },
+  recibido: { label: "Recibido", className: "pill-in" },
+  cancelado: { label: "Cancelado", className: "pill-danger" },
+};
+
+export function orderStatusLabel(status) {
+  return ORDER_STATUS[status]?.label || status;
+}
+
+export const LOAN_STATUS = {
+  activo: { label: "En préstamo", className: "pill-warn" },
+  devuelto: { label: "Devuelto", className: "pill-in" },
+  vencido: { label: "Vencido", className: "pill-danger" },
+};
+
+export function loanStatusLabel(status) {
+  return LOAN_STATUS[status]?.label || status;
+}

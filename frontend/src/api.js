@@ -59,4 +59,54 @@ export const api = {
     request("/api/users", { method: "POST", body: payload, token }),
   updateUser: (token, id, payload) =>
     request(`/api/users/${id}`, { method: "PUT", body: payload, token }),
+  forgotPassword: (email) =>
+    request("/api/auth/forgot-password", { method: "POST", body: { email } }),
+  resetPassword: (token, new_password) =>
+    request("/api/auth/reset-password", { method: "POST", body: { token, new_password } }),
+  // Clientes
+  listCustomers: (token, params = {}) => {
+    const q = new URLSearchParams();
+    if (params.q) q.set("q", params.q);
+    const qs = q.toString();
+    return request(`/api/customers${qs ? `?${qs}` : ""}`, { token });
+  },
+  createCustomer: (token, payload) =>
+    request("/api/customers", { method: "POST", body: payload, token }),
+  updateCustomer: (token, id, payload) =>
+    request(`/api/customers/${id}`, { method: "PUT", body: payload, token }),
+  deleteCustomer: (token, id) =>
+    request(`/api/customers/${id}`, { method: "DELETE", token }),
+  // Pedidos
+  listOrders: (token, params = {}) => {
+    const q = new URLSearchParams();
+    if (params.status) q.set("status", params.status);
+    if (params.q) q.set("q", params.q);
+    const qs = q.toString();
+    return request(`/api/orders${qs ? `?${qs}` : ""}`, { token });
+  },
+  createOrder: (token, payload) =>
+    request("/api/orders", { method: "POST", body: payload, token }),
+  updateOrder: (token, id, payload) =>
+    request(`/api/orders/${id}`, { method: "PUT", body: payload, token }),
+  deleteOrder: (token, id) =>
+    request(`/api/orders/${id}`, { method: "DELETE", token }),
+  // Préstamos
+  listLoans: (token, params = {}) => {
+    const q = new URLSearchParams();
+    if (params.status) q.set("status", params.status);
+    if (params.product_id) q.set("product_id", params.product_id);
+    const qs = q.toString();
+    return request(`/api/loans${qs ? `?${qs}` : ""}`, { token });
+  },
+  createLoan: (token, payload) =>
+    request("/api/loans", { method: "POST", body: payload, token }),
+  updateLoan: (token, id, payload) =>
+    request(`/api/loans/${id}`, { method: "PUT", body: payload, token }),
+  returnLoan: (token, id, payload) =>
+    request(`/api/loans/${id}/return`, { method: "POST", body: payload, token }),
+  deleteLoan: (token, id) =>
+    request(`/api/loans/${id}`, { method: "DELETE", token }),
+  // Notificaciones / Campanita
+  getNotifications: (token) =>
+    request("/api/notifications", { token }),
 };

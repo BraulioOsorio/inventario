@@ -123,14 +123,24 @@ export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [movements, setMovements] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loans, setLoans] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([api.listProducts(token), api.listCategories(token), api.listMovements(token)])
-      .then(([p, c, m]) => {
+    Promise.all([
+      api.listProducts(token),
+      api.listCategories(token),
+      api.listMovements(token),
+      api.listOrders(token),
+      api.listLoans(token),
+    ])
+      .then(([p, c, m, o, l]) => {
         setProducts(p);
         setCategories(c);
         setMovements(m);
+        setOrders(o || []);
+        setLoans(l || []);
       })
       .catch((err) => setError(err.message));
   }, [token]);
@@ -138,6 +148,8 @@ export default function HomePage() {
   const lowItems = useMemo(() => products.filter((p) => p.low_stock), [products]);
   const critical = useMemo(() => products.filter((p) => Number(p.quantity) <= 0), [products]);
   const units = useMemo(() => products.reduce((a, p) => a + Number(p.quantity || 0), 0), [products]);
+  const dueOrders = useMemo(() => orders.filter((o) => o.is_due_soon), [orders]);
+  const activeLoans = useMemo(() => loans.filter((l) => l.status === "activo"), [loans]);
   const value = useMemo(
     () => products.reduce((acc, p) => acc + Number(p.quantity) * Number(p.unit_price), 0),
     [products]
@@ -162,7 +174,9 @@ export default function HomePage() {
       <section className="kpi-grid">
         <KpiCard label="Productos activos" value={products.length} hint="Ítems en catálogo" icon="P" />
         <KpiCard label="Unidades en stock" value={units} hint="Cantidad total" icon="U" />
-        <KpiCard label="Alertas activas" value={lowItems.length + critical.length} hint="Bajo mínimo o agotados" tone="warn" icon="!" />
+        <KpiCard label="Alertas activas" value={lowItems.length + critical.length} hint="Bajo mínimo o agotados" tone={lowItems.length + critical.length ? "warn" : "normal"} icon="!" />
+        <KpiCard label="Pedidos próximos" value={dueOrders.length} hint={dueOrders.length ? "Avisados para esta semana" : "Al día"} tone={dueOrders.length ? "warn" : "normal"} icon="🚚" />
+        <KpiCard label="Préstamos activos" value={activeLoans.length} hint="Artículos prestados" icon="🤝" />
         <KpiCard label="Movimientos" value={movements.length} hint="Registros históricos" icon="↕" />
       </section>
 

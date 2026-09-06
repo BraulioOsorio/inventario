@@ -7,6 +7,9 @@ const NAV = [
   { to: "/", label: "Inicio", end: true, icon: "home", desc: "Resumen general" },
   { to: "/movimientos", label: "Punto de venta", icon: "pos", desc: "Cobrar y vender" },
   { to: "/productos", label: "Productos", icon: "box", desc: "Catálogo completo" },
+  { to: "/pedidos", label: "Pedidos", icon: "orders", desc: "Compras a proveedores" },
+  { to: "/prestamos", label: "Préstamos", icon: "loans", desc: "Custodia y devolución" },
+  { to: "/clientes", label: "Clientes", icon: "customers", desc: "Directorio de contactos" },
   { to: "/categorias", label: "Categorías", icon: "tag", desc: "Organización" },
   { to: "/alertas", label: "Alertas", icon: "bell", desc: "Stock bajo" },
 ];
@@ -34,6 +37,27 @@ function NavIcon({ name }) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M20 12 12 20l-8-8V4h8l8 8z" />
         <circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+    orders: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z" />
+        <circle cx="5.5" cy="18.5" r="2.5" />
+        <circle cx="18.5" cy="18.5" r="2.5" />
+      </svg>
+    ),
+    loans: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+        <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+        <path d="M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
+      </svg>
+    ),
+    customers: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
     bell: (
