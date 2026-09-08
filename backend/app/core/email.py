@@ -141,9 +141,15 @@ Ingresa al siguiente enlace para restablecerla (válido por 30 minutos):
 Si no solicitaste este cambio, ignora este mensaje.
 """
 
-    if not settings.SMTP_HOST or not settings.SMTP_USER:
+    smtp_host = (settings.SMTP_HOST or "").strip()
+    smtp_user = (settings.SMTP_USER or "").strip()
+    smtp_password = (settings.SMTP_PASSWORD or "").replace(" ", "").strip()
+    smtp_port = int(settings.SMTP_PORT or 587)
+    from_email = (settings.SMTP_FROM_EMAIL or smtp_user or "no-reply@inventario.app").strip()
+
+    if not smtp_host or not smtp_user:
         logger.warning(
-            f"[SMTP NO CONFIGURADO] Faltan variables SMTP_HOST y SMTP_USER en el entorno de Render. "
+            f"[SMTP NO CONFIGURADO] Faltan variables SMTP_HOST y SMTP_USER en el entorno. "
             f"No se pudo enviar el correo a {to_email}. Enlace de recuperación: {reset_url}"
         )
         return False
@@ -157,21 +163,21 @@ Si no solicitaste este cambio, ignora este mensaje.
         msg.attach(MIMEText(plain_content, "plain", "utf-8"))
         msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-        if settings.SMTP_PORT == 465:
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
-                if settings.SMTP_PASSWORD:
-                    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+        if smtp_port == 465:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=15) as server:
+                if smtp_password:
+                    server.login(smtp_user, smtp_password)
                 server.sendmail(from_email, [to_email], msg.as_string())
         else:
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
                 if settings.SMTP_TLS:
                     server.starttls()
-                if settings.SMTP_PASSWORD:
-                    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                if smtp_password:
+                    server.login(smtp_user, smtp_password)
                 server.sendmail(from_email, [to_email], msg.as_string())
 
         logger.info(f"Correo de recuperación enviado con éxito a {to_email}")
         return True
     except Exception as exc:
-        logger.error(f"Error al enviar correo de recuperación a {to_email}: {exc}")
+        logger.error(f"Error al enviar correo de recuperación a {to_email}: {exc}", exc_info=True)
         return False
