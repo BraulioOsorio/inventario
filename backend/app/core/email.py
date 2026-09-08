@@ -1,5 +1,8 @@
+import json
 import logging
 import smtplib
+import urllib.error
+import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -8,13 +11,172 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
+def _send_via_brevo_http(
+    to_email: str,
+    user_name: str,
+    subject: str,
+    html_content: str,
+    plain_content: str,
+    from_email: str,
+) -> bool:
+    """Envía el correo a través de la API REST de Brevo (HTTPS puerto 443, sin bloqueos de firewall)."""
+    api_key = settings.BREVO_API_KEY.strip()
+    if not api_key:
+        return False
+
+    url = "https://api.brevo.com/v3/smtp/email"
+    sender_email = from_email or settings.ADMIN_EMAIL or "no-reply@inventario.app"
+
+    payload = {
+        "sender": {"name": "Inventario Modular", "email": sender_email},
+        "to": [{"email": to_email, "name": user_name}],
+        "subject": subject,
+        "htmlContent": html_content,
+        "textContent": plain_content,
+    }
+
+    try:
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                "api-key": api_key,
+                "Accept": "application/json",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=12) as response:
+            if response.status in (200, 201, 202):
+                logger.info(f"Correo de recuperación enviado con éxito a {to_email} vía Brevo API (HTTPS)")
+                return True
+            logger.warning(f"Respuesta inesperada de Brevo API: {response.status}")
+            return False
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        logger.error(f"Error HTTP de Brevo API al enviar a {to_email} (código {exc.code}): {body}")
+        return False
+    except Exception as exc:
+        logger.error(f"Error al conectar con Brevo API: {exc}")
+        return False
+
+
+def _send_via_resend_http(
+    to_email: str,
+    subject: str,
+    html_content: str,
+    plain_content: str,
+    from_email: str,
+) -> bool:
+    """Envía el correo a través de la API REST de Resend (HTTPS puerto 443)."""
+    api_key = settings.RESEND_API_KEY.strip()
+    if not api_key:
+        return False
+
+    url = "https://api.resend.com/emails"
+    # Resend en modo prueba permite onboarding@resend.dev si no hay dominio propio verificado
+    sender = from_email if ("@" in from_email and "gmail" not in from_email.lower()) else "Inventario Modular <onboarding@resend.dev>"
+
+    payload = {
+        "from": sender,
+        "to": [to_email],
+        "subject": subject,
+        "html": html_content,
+        "text": plain_content,
+    }
+
+    try:
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=12) as response:
+            if response.status in (200, 201):
+                logger.info(f"Correo de recuperación enviado con éxito a {to_email} vía Resend API (HTTPS)")
+                return True
+            logger.warning(f"Respuesta inesperada de Resend API: {response.status}")
+            return False
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        logger.error(f"Error HTTP de Resend API al enviar a {to_email} (código {exc.code}): {body}")
+        return False
+    except Exception as exc:
+        logger.error(f"Error al conectar con Resend API: {exc}")
+        return False
+
+
+def _send_via_smtp(
+    to_email: str,
+    subject: str,
+    html_content: str,
+    plain_content: str,
+    from_email: str,
+) -> bool:
+    """Envía correo vía SMTP tradicional (puerto 587 o 465)."""
+    smtp_host = (settings.SMTP_HOST or "").strip()
+    smtp_user = (settings.SMTP_USER or "").strip()
+    smtp_password = (settings.SMTP_PASSWORD or "").replace(" ", "").strip()
+    smtp_port = int(settings.SMTP_PORT or 587)
+
+    if not smtp_host or not smtp_user:
+        return False
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = from_email
+    msg["To"] = to_email
+
+    msg.attach(MIMEText(plain_content, "plain", "utf-8"))
+    msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+    try:
+        if smtp_port == 465:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=12) as server:
+                if smtp_password:
+                    server.login(smtp_user, smtp_password)
+                server.sendmail(from_email, [to_email], msg.as_string())
+        else:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=12) as server:
+                if settings.SMTP_TLS:
+                    server.starttls()
+                if smtp_password:
+                    server.login(smtp_user, smtp_password)
+                server.sendmail(from_email, [to_email], msg.as_string())
+
+        logger.info(f"Correo de recuperación enviado con éxito a {to_email} vía SMTP")
+        return True
+    except OSError as exc:
+        if exc.errno == 101 or "network is unreachable" in str(exc).lower():
+            logger.error(
+                f"[PUERTO SMTP BLOQUEADO EN RENDER FREE] Render en plan gratuito bloquea los puertos "
+                f"SMTP salientes (25, 465, 587) para prevenir spam: {exc}. "
+                f"SOLUCIÓN: Configura la variable BREVO_API_KEY o RESEND_API_KEY para enviar por HTTPS (puerto 443)."
+            )
+        else:
+            logger.error(f"Error de red SMTP al enviar a {to_email}: {exc}")
+        return False
+    except Exception as exc:
+        logger.error(f"Error SMTP al enviar correo a {to_email}: {exc}")
+        return False
+
+
 def send_password_reset_email(to_email: str, reset_url: str, user_name: str) -> bool:
     """
-    Envía un correo con el enlace de recuperación de contraseña si SMTP está configurado.
-    Si no está configurado o falla, registra el evento en logs y retorna False.
+    Envía un correo con el enlace de recuperación de contraseña.
+    Prioridad:
+    1. Brevo REST API (HTTPS puerto 443 - recomendado para Render Free)
+    2. Resend REST API (HTTPS puerto 443)
+    3. SMTP tradicional (si Render es de pago o local)
     """
     subject = "Recuperación de contraseña — Inventario Modular"
-    from_email = settings.SMTP_FROM_EMAIL or settings.SMTP_USER or "no-reply@inventario.app"
+    from_email = (settings.SMTP_FROM_EMAIL or settings.SMTP_USER or "no-reply@inventario.app").strip()
 
     html_content = f"""
     <!DOCTYPE html>
@@ -141,43 +303,26 @@ Ingresa al siguiente enlace para restablecerla (válido por 30 minutos):
 Si no solicitaste este cambio, ignora este mensaje.
 """
 
-    smtp_host = (settings.SMTP_HOST or "").strip()
-    smtp_user = (settings.SMTP_USER or "").strip()
-    smtp_password = (settings.SMTP_PASSWORD or "").replace(" ", "").strip()
-    smtp_port = int(settings.SMTP_PORT or 587)
-    from_email = (settings.SMTP_FROM_EMAIL or smtp_user or "no-reply@inventario.app").strip()
+    # Registro en logs de respaldo (así siempre podrás ver el enlace si lo necesitas consultar en consola)
+    logger.info(f"[ENLACE DE RECUPERACIÓN GENERADO] para {to_email}: {reset_url}")
 
-    if not smtp_host or not smtp_user:
-        logger.warning(
-            f"[SMTP NO CONFIGURADO] Faltan variables SMTP_HOST y SMTP_USER en el entorno. "
-            f"No se pudo enviar el correo a {to_email}. Enlace de recuperación: {reset_url}"
-        )
-        return False
+    # 1. Intentar Brevo HTTP API
+    if settings.BREVO_API_KEY:
+        if _send_via_brevo_http(to_email, user_name, subject, html_content, plain_content, from_email):
+            return True
 
-    try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = from_email
-        msg["To"] = to_email
+    # 2. Intentar Resend HTTP API
+    if settings.RESEND_API_KEY:
+        if _send_via_resend_http(to_email, subject, html_content, plain_content, from_email):
+            return True
 
-        msg.attach(MIMEText(plain_content, "plain", "utf-8"))
-        msg.attach(MIMEText(html_content, "html", "utf-8"))
+    # 3. Intentar SMTP tradicional
+    if settings.SMTP_HOST and settings.SMTP_USER:
+        if _send_via_smtp(to_email, subject, html_content, plain_content, from_email):
+            return True
 
-        if smtp_port == 465:
-            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=15) as server:
-                if smtp_password:
-                    server.login(smtp_user, smtp_password)
-                server.sendmail(from_email, [to_email], msg.as_string())
-        else:
-            with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
-                if settings.SMTP_TLS:
-                    server.starttls()
-                if smtp_password:
-                    server.login(smtp_user, smtp_password)
-                server.sendmail(from_email, [to_email], msg.as_string())
-
-        logger.info(f"Correo de recuperación enviado con éxito a {to_email}")
-        return True
-    except Exception as exc:
-        logger.error(f"Error al enviar correo de recuperación a {to_email}: {exc}", exc_info=True)
-        return False
+    logger.warning(
+        f"[AVISO] No se pudo enviar el correo a {to_email}. "
+        f"En Render Free debes configurar la variable BREVO_API_KEY o RESEND_API_KEY (HTTPS puerto 443)."
+    )
+    return False

@@ -43,7 +43,12 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = ""
     ADMIN_FULL_NAME: str = "Braulio Osorio Martinez"
 
-    # Configuración de Correo / SMTP para recuperación de contraseña
+    # Configuración de Correo para recuperación de contraseña
+    # HTTP REST APIs (recomendado para Render Free, puerto 443 HTTPS sin bloqueos)
+    BREVO_API_KEY: str = ""
+    RESEND_API_KEY: str = ""
+
+    # SMTP tradicional (bloqueado en Render Free, funciona en Render de pago o local)
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
