@@ -142,8 +142,9 @@ Si no solicitaste este cambio, ignora este mensaje.
 """
 
     if not settings.SMTP_HOST or not settings.SMTP_USER:
-        logger.info(
-            f"[SMTP NO CONFIGURADO] Enlace de recuperación para {to_email}: {reset_url}"
+        logger.warning(
+            f"[SMTP NO CONFIGURADO] Faltan variables SMTP_HOST y SMTP_USER en el entorno de Render. "
+            f"No se pudo enviar el correo a {to_email}. Enlace de recuperación: {reset_url}"
         )
         return False
 

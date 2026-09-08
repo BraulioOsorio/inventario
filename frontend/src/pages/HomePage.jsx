@@ -172,12 +172,22 @@ export default function HomePage() {
       {error && <Alert>{error}</Alert>}
 
       <section className="kpi-grid">
-        <KpiCard label="Productos activos" value={products.length} hint="Ítems en catálogo" icon="P" />
-        <KpiCard label="Unidades en stock" value={units} hint="Cantidad total" icon="U" />
-        <KpiCard label="Alertas activas" value={lowItems.length + critical.length} hint="Bajo mínimo o agotados" tone={lowItems.length + critical.length ? "warn" : "normal"} icon="!" />
-        <KpiCard label="Pedidos próximos" value={dueOrders.length} hint={dueOrders.length ? "Avisados para esta semana" : "Al día"} tone={dueOrders.length ? "warn" : "normal"} icon="🚚" />
-        <KpiCard label="Préstamos activos" value={activeLoans.length} hint="Artículos prestados" icon="🤝" />
-        <KpiCard label="Movimientos" value={movements.length} hint="Registros históricos" icon="↕" />
+        <KpiCard label="Productos activos" value={products.length} hint="Ítems en catálogo" />
+        <KpiCard label="Unidades en stock" value={units} hint="Cantidad total" />
+        <KpiCard
+          label="Alertas activas"
+          value={lowItems.length + critical.length}
+          hint="Bajo mínimo o agotados"
+          tone={lowItems.length + critical.length ? "warn" : "normal"}
+        />
+        <KpiCard
+          label="Pedidos próximos"
+          value={dueOrders.length}
+          hint={dueOrders.length ? "Avisados para esta semana" : "Al día"}
+          tone={dueOrders.length ? "warn" : "normal"}
+        />
+        <KpiCard label="Préstamos activos" value={activeLoans.length} hint="Artículos prestados" />
+        <KpiCard label="Movimientos" value={movements.length} hint="Registros históricos" />
       </section>
 
       <section className="dash-grid dash-grid-home">

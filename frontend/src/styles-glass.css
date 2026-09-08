@@ -13,11 +13,23 @@
 
 body {
   background:
-    radial-gradient(ellipse 80% 60% at 10% 0%, rgba(99, 102, 241, 0.22) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 50% at 90% 10%, rgba(34, 211, 238, 0.18) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(167, 139, 250, 0.15) 0%, transparent 55%),
-    linear-gradient(160deg, #e8ecf8 0%, #eef2ff 40%, #f0fdfa 100%) !important;
-  background-attachment: fixed;
+    radial-gradient(circle at 10% 12%, rgba(99, 102, 241, 0.28) 0%, transparent 45%),
+    radial-gradient(circle at 88% 15%, rgba(34, 211, 238, 0.24) 0%, transparent 40%),
+    radial-gradient(circle at 82% 82%, rgba(168, 85, 247, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 14% 85%, rgba(59, 130, 246, 0.22) 0%, transparent 48%),
+    linear-gradient(135deg, #edf2fc 0%, #eef3ff 45%, #f5f3ff 100%) !important;
+  background-attachment: fixed !important;
+  min-height: 100vh;
+}
+
+/* ─── Contenedores ERP transparentes (vital para ver el efecto glass) ─── */
+.erp,
+.erp-main,
+.page,
+.page-module,
+.page-dashboard,
+main {
+  background: transparent !important;
 }
 
 .glass-boot {
@@ -169,8 +181,18 @@ body {
   font-size: 0.92rem;
   box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
 }
-.auth-feature-icon {
-  font-size: 1.25rem;
+.auth-feature-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.15);
+  color: #4f46e5;
+  font-size: 0.8rem;
+  font-weight: 800;
+  flex-shrink: 0;
 }
 .glass-auth-card {
   border-radius: 24px !important;
@@ -328,13 +350,17 @@ body {
 }
 
 /* ─── Topbar glass ─── */
-.glass-topbar {
-  background: rgba(255, 255, 255, 0.55) !important;
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--glass-border) !important;
+.glass-topbar,
+.module-topbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+  background: rgba(255, 255, 255, 0.68) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.75) !important;
   color: var(--ink) !important;
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.06);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08) !important;
 }
 .glass-topbar h1 {
   color: var(--ink) !important;
@@ -377,46 +403,225 @@ body {
   gap: 0.75rem;
 }
 
+/* ─── Alertas con estilo Glassmorphism y z-index ─── */
+.alert {
+  position: relative !important;
+  z-index: 10 !important;
+  border-radius: 14px !important;
+  padding: 0.85rem 1.15rem !important;
+  font-size: 0.92rem !important;
+  font-weight: 600 !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  margin-bottom: 1.25rem !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+}
+.alert.error {
+  background: rgba(254, 242, 242, 0.82) !important;
+  color: #b91c1c !important;
+  border: 1px solid rgba(248, 113, 113, 0.5) !important;
+}
+.alert.success {
+  background: rgba(240, 253, 244, 0.82) !important;
+  color: #15803d !important;
+  border: 1px solid rgba(74, 222, 128, 0.5) !important;
+}
+
+/* ─── KPI Grid y Cards Glass Minimalistas ─── */
+.kpi-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 1.1rem !important;
+  margin-bottom: 1.6rem !important;
+}
+@media (max-width: 992px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 580px) {
+  .kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.kpi {
+  background: rgba(255, 255, 255, 0.62) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 18px !important;
+  padding: 1.15rem 1.35rem !important;
+  box-shadow: 0 10px 32px rgba(31, 38, 135, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.kpi:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 14px 40px rgba(31, 38, 135, 0.12), inset 0 1px 0 #ffffff !important;
+}
+.kpi-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-size: 0.76rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  margin-bottom: 0.35rem !important;
+}
+.kpi strong {
+  display: block !important;
+  font-size: 2.15rem !important;
+  font-weight: 800 !important;
+  font-family: "Manrope", system-ui, sans-serif !important;
+  color: #0f172a !important;
+  line-height: 1.1 !important;
+  margin: 0.2rem 0 0.35rem !important;
+}
+.kpi small {
+  color: #64748b !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+}
+.kpi-warn {
+  border-color: rgba(245, 158, 11, 0.45) !important;
+}
+.kpi-warn strong {
+  color: #b45309 !important;
+}
+.kpi-danger {
+  border-color: rgba(239, 68, 68, 0.45) !important;
+}
+.kpi-danger strong {
+  color: #dc2626 !important;
+}
+
 /* ─── Panels glass ─── */
 .glass-panel,
 .panel,
-.kpi,
 .form-card,
 .data-toolbar,
 .valuation-card,
 .toolbar {
-  background: var(--glass-bg-strong) !important;
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border) !important;
-  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+  background: rgba(255, 255, 255, 0.62) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
+  box-shadow: 0 10px 32px rgba(31, 38, 135, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  border-radius: 18px !important;
 }
 .glass-panel-accent {
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(238, 242, 255, 0.65)) !important;
-  border-color: rgba(99, 102, 241, 0.2) !important;
+  border-color: rgba(99, 102, 241, 0.25) !important;
 }
+
+/* ─── Botones Glass Auténticos ─── */
 .btn-primary {
-  background: linear-gradient(135deg, #6366f1, #818cf8) !important;
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35) !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(129, 140, 248, 0.9)) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.55) !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
 }
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.45) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
 }
 .btn-secondary {
   background: rgba(255, 255, 255, 0.65) !important;
-  border-color: rgba(99, 102, 241, 0.2) !important;
   color: #4338ca !important;
-  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: 0 4px 14px rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
+}
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.9) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(31, 38, 135, 0.08), inset 0 1px 0 #ffffff !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+.btn-danger-ghost {
+  background: rgba(254, 242, 242, 0.65) !important;
+  color: #dc2626 !important;
+  border: 1px solid rgba(252, 165, 165, 0.55) !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+}
+.btn-danger-ghost:hover:not(:disabled) {
+  background: rgba(254, 226, 226, 0.9) !important;
+  border-color: #ef4444 !important;
+}
+.btn-sm {
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.84rem !important;
+  border-radius: 10px !important;
+}
+.filter-chip {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 999px !important;
+  color: #475569 !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+}
+.filter-chip.active {
+  background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+}
+
+/* ─── Entradas y Controles Glass ─── */
+input,
+select,
+textarea {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03), 0 2px 8px rgba(31, 38, 135, 0.03) !important;
+  border-radius: 12px !important;
+  color: #1e293b !important;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  outline: none !important;
 }
 
 .modal-overlay {
   background: rgba(15, 23, 42, 0.35) !important;
   backdrop-filter: blur(8px) !important;
+  z-index: 3000 !important;
 }
 .modal-card {
-  background: var(--glass-bg-strong) !important;
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25) !important;
+  z-index: 3001 !important;
 }
 
 /* ─── POS layout ─── */
@@ -909,56 +1114,58 @@ body {
 
 /* ─── Campanita de notificaciones (Topbar) ─── */
 .topbar-bell-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  z-index: 1010 !important;
 }
 
 .topbar-bell-btn {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid var(--glass-border);
-  color: #374151;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.65) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  color: #374151 !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 2px 8px rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
 }
 
 .topbar-bell-btn:hover {
-  background: rgba(255, 255, 255, 0.9);
-  color: #4f46e5;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #4f46e5 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25) !important;
 }
 
 .topbar-bell-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 20px !important;
+  height: 20px !important;
 }
 
 .topbar-bell-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #ef4444;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 0 2px #ffffff, 0 2px 6px rgba(239, 68, 68, 0.4);
-  animation: pulseBadge 2.5s infinite;
+  position: absolute !important;
+  top: -4px !important;
+  right: -4px !important;
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  padding: 0 4px !important;
+  border-radius: 999px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 0 0 2px #ffffff, 0 2px 6px rgba(239, 68, 68, 0.4) !important;
+  animation: pulseBadge 2.5s infinite !important;
 }
 
 @keyframes pulseBadge {
@@ -968,21 +1175,21 @@ body {
 }
 
 .notifications-popover {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: min(390px, 90vw);
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 18px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: dropDown 0.2s ease-out;
+  position: absolute !important;
+  top: calc(100% + 12px) !important;
+  right: 0 !important;
+  width: min(400px, 92vw) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(32px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 24px 65px rgba(15, 23, 42, 0.22), 0 4px 20px rgba(99, 102, 241, 0.12) !important;
+  z-index: 2500 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  animation: dropDown 0.2s ease-out !important;
 }
 
 @keyframes dropDown {
@@ -991,128 +1198,155 @@ body {
 }
 
 .notifications-head {
-  padding: 1rem 1.15rem 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 1.1rem 1.25rem 0.85rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
 }
 
 .notifications-head h3 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #1e293b;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  margin: 0 !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
 }
 
 .notifications-filters {
-  display: flex;
-  gap: 0.35rem;
-  padding: 0.5rem 1rem;
-  background: rgba(241, 245, 249, 0.5);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-  overflow-x: auto;
+  display: flex !important;
+  gap: 0.35rem !important;
+  padding: 0.55rem 1rem !important;
+  background: rgba(241, 245, 249, 0.55) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6) !important;
+  overflow-x: auto !important;
 }
 
 .notifications-filters button {
-  background: transparent;
-  border: none;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #64748b;
-  padding: 0.3rem 0.6rem;
-  border-radius: 999px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s;
+  background: transparent !important;
+  border: none !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 999px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s !important;
 }
 
 .notifications-filters button.active {
-  background: #4f46e5;
-  color: #ffffff;
+  background: #4f46e5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25) !important;
 }
 
 .notifications-list {
-  max-height: 380px;
-  overflow-y: auto;
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+  max-height: 380px !important;
+  overflow-y: auto !important;
+  padding: 0.6rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
 }
 
 .notification-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(226, 232, 240, 0.7);
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.15s ease;
-  cursor: pointer;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.75rem !important;
+  padding: 0.8rem !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  border: 1px solid rgba(226, 232, 240, 0.75) !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
 }
 
 .notification-item:hover {
-  background: rgba(255, 255, 255, 0.95);
-  transform: translateX(2px);
-  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(255, 255, 255, 0.98) !important;
+  transform: translateX(2px) !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(31, 38, 135, 0.08) !important;
 }
 
 .notification-item.danger {
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid #ef4444 !important;
 }
 
 .notification-item.warn {
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid #f59e0b !important;
 }
 
 .notification-item.info {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #3b82f6 !important;
 }
 
-.notification-icon {
-  font-size: 1.25rem;
-  line-height: 1;
+.notification-meta-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.notif-tag {
+  display: inline-block !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 0.15rem 0.5rem !important;
+  border-radius: 999px !important;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+.notif-tag-stock {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+.notif-tag-order {
+  background: #e0e7ff !important;
+  color: #3730a3 !important;
+}
+
+.notif-tag-loan {
+  background: #ede9fe !important;
+  color: #5b21b6 !important;
 }
 
 .notification-content {
-  flex: 1;
-  min-width: 0;
+  flex: 1 !important;
+  min-width: 0 !important;
 }
 
 .notification-title {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.2rem;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
 }
 
 .notification-desc {
-  font-size: 0.8rem;
-  color: #4b5563;
-  line-height: 1.35;
+  font-size: 0.8rem !important;
+  color: #4b5563 !important;
+  line-height: 1.4 !important;
 }
 
 .notification-foot {
-  padding: 0.75rem 1rem;
-  border-top: 1px solid rgba(226, 232, 240, 0.8);
-  display: flex;
-  justify-content: space-between;
-  background: rgba(255, 255, 255, 0.4);
-  font-size: 0.82rem;
+  padding: 0.8rem 1.15rem !important;
+  border-top: 1px solid rgba(226, 232, 240, 0.8) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  background: rgba(248, 250, 252, 0.6) !important;
+  font-size: 0.82rem !important;
 }
 
 .notifications-empty {
-  padding: 2.5rem 1rem;
-  text-align: center;
-  color: #64748b;
-  font-size: 0.9rem;
+  padding: 2.5rem 1rem !important;
+  text-align: center !important;
+  color: #64748b !important;
+  font-size: 0.9rem !important;
 }
 
 /* Pills de estado adicionales */

@@ -70,7 +70,6 @@ class AuthService:
         return ForgotPasswordResponse(
             message="Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
             email_sent=email_sent,
-            reset_link=reset_url if (not email_sent or settings.ENVIRONMENT == "development") else None,
         )
 
     def reset_password(self, payload: ResetPasswordRequest) -> SimpleMessageResponse:

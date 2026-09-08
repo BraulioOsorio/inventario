@@ -54,7 +54,6 @@ class ForgotPasswordRequest(BaseModel):
 class ForgotPasswordResponse(BaseModel):
     message: str
     email_sent: bool = False
-    reset_link: str | None = None
 
 
 class ResetPasswordRequest(BaseModel):

@@ -161,10 +161,15 @@ export default function OrdersPage() {
       {ok && <Alert type="success">{ok}</Alert>}
 
       <section className="kpi-grid">
-        <KpiCard label="Total pedidos" value={kpis.total} hint="En sistema" icon="📋" />
-        <KpiCard label="Pendientes" value={kpis.pending} hint="Por realizar o entregar" tone="warn" icon="⏳" />
-        <KpiCard label="Próximos esta semana" value={kpis.dueSoon} hint="Avisados en campanita" tone={kpis.dueSoon ? "warn" : "normal"} icon="🔔" />
-        <KpiCard label="Inversión proyectada" value={formatMoney(kpis.sumEstimated)} hint="Presupuesto de compras" icon="💰" />
+        <KpiCard label="Total pedidos" value={kpis.total} hint="En sistema" />
+        <KpiCard label="Pendientes" value={kpis.pending} hint="Por realizar o entregar" tone="warn" />
+        <KpiCard
+          label="Próximos esta semana"
+          value={kpis.dueSoon}
+          hint="Avisados en campanita"
+          tone={kpis.dueSoon ? "warn" : "normal"}
+        />
+        <KpiCard label="Inversión proyectada" value={formatMoney(kpis.sumEstimated)} hint="Presupuesto de compras" />
       </section>
 
       <DataToolbar
@@ -249,7 +254,7 @@ export default function OrdersPage() {
                   <td>
                     {o.is_due_soon ? (
                       <span className="pill out" title="Notificado una semana antes de la fecha">
-                        🔔 Próximo (1 semana)
+                        Próximo (1 semana)
                       </span>
                     ) : (
                       <span className="muted tiny">Al día</span>

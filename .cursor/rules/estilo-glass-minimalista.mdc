@@ -1,0 +1,33 @@
+---
+description: Estándares de diseño de interfaz UI con Glassmorphism auténtico y enfoque minimalista
+alwaysApply: true
+---
+
+# Reglas de Diseño UI: Glassmorphism Minimalista
+
+Estas directrices deben aplicarse en todos los componentes, vistas y estilos del sistema Inventario Modular.
+
+## 1. Estilo Glassmorphism Auténtico (Efecto Cristal Esmerilado)
+- **Fondo global visible:** El fondo del `body` utiliza un gradiente radial multicapa vibrante fijado (`background-attachment: fixed`).
+- **Contenedores transparentes:** Las capas envolventes como `.erp`, `.erp-main`, `.page` y contenedores generales **deben tener `background: transparent !important`**. Nunca colocar fondos opacos (grises o blancos sólidos) en los contenedores intermedios porque anulan el efecto de cristal.
+- **Superficies Glass:** Paneles (`.panel`), tarjetas (`.kpi`), barras de herramientas (`.data-toolbar`), modales (`.modal-card`) y menús emergentes (`.notifications-popover`) deben usar:
+  - Fondo translúcido: `background: rgba(255, 255, 255, 0.58)` a `rgba(255, 255, 255, 0.75)`.
+  - Desenfoque de fondo: `backdrop-filter: blur(18px) saturate(180%);` y `-webkit-backdrop-filter: blur(18px) saturate(180%);`.
+  - Bordes translúcidos con resalte: `border: 1px solid rgba(255, 255, 255, 0.7);` con `box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.85);`.
+  - Radio redondeado moderno: `border-radius: 16px` a `20px`.
+- **Botones con acabado Glass:**
+  - Botón primario (`.btn-primary`): Gradiente vibrante con brillo translúcido y sombra de neón suave.
+  - Botón secundario (`.btn-secondary`): Cristal esmerilado con texto contrastado y borde brillante.
+  - Botón de peligro/cancelación (`.btn-danger-ghost`): Tinte sutil translúcido, nunca botón plano sin estilo.
+
+## 2. Enfoque Minimalista y Limpieza Visual
+- **No saturar de emojis:** Evitar poner emojis o letras en badges redondos dentro de las tarjetas KPI o filas de tablas.
+- **Tipografía clara y jerárquica:** El foco visual debe ser el dato numérico relevante y una etiqueta limpia en gris suave.
+- **Iconografía sobria:** Solo usar iconos SVG lineales y discretos en el menú de navegación y acciones clave.
+- **Espaciado balanceado:** Dejar respirar los bloques con márgenes y paddings generosos, evitando saturación de cajas.
+
+## 3. Jerarquía Visual y Capas (Stacking Context & Z-Index)
+- **Topbar:** La barra superior `.module-topbar` debe ser `position: sticky; top: 0; z-index: 100;` para que mantenga un contexto de apilamiento superior al cuerpo de la página.
+- **Elementos flotantes (Campanita, Popovers, Dropdowns):**
+  - Deben tener `z-index: 1000` o superior y fondo de cristal con opacidad suficiente (`rgba(255, 255, 255, 0.88)`) para garantizar total legibilidad y evitar que las tarjetas con `backdrop-filter` del contenido se monten por encima.
+- **Modales:** Capa de fondo (`.modal-overlay`) con `backdrop-filter: blur(10px)` y `z-index: 2000`.

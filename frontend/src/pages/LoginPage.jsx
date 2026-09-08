@@ -5,10 +5,10 @@ import { useAuth } from "../auth";
 import { Alert, FormField } from "../components/ui";
 
 const FEATURES = [
-  { icon: "📦", text: "Catálogo y stock en tiempo real" },
-  { icon: "🛒", text: "Punto de venta con cálculo de cambio" },
-  { icon: "🔔", text: "Alertas de inventario bajo y pedidos" },
-  { icon: "🤝", text: "Control de clientes y préstamos" },
+  "Catálogo y stock en tiempo real",
+  "Punto de venta y registro de movimientos",
+  "Alertas inteligentes de stock bajo y pedidos",
+  "Control centralizado de clientes y préstamos",
 ];
 
 export default function LoginPage() {
@@ -19,7 +19,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [okMessage, setOkMessage] = useState("");
-  const [resetLink, setResetLink] = useState("");
   const [busy, setBusy] = useState(false);
 
   if (token) return <Navigate to="/" replace />;
@@ -28,7 +27,6 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setOkMessage("");
-    setResetLink("");
     setBusy(true);
 
     try {
@@ -41,9 +39,6 @@ export default function LoginPage() {
         setOkMessage(
           res.message || "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña."
         );
-        if (res.reset_link) {
-          setResetLink(res.reset_link);
-        }
       }
     } catch (err) {
       setError(err.message || "No se pudo completar la operación");
@@ -73,10 +68,10 @@ export default function LoginPage() {
           pedidos a proveedores y préstamos en un solo lugar.
         </p>
         <ul className="auth-features">
-          {FEATURES.map((f) => (
-            <li key={f.text}>
-              <span className="auth-feature-icon">{f.icon}</span>
-              {f.text}
+          {FEATURES.map((text) => (
+            <li key={text}>
+              <span className="auth-feature-check">✓</span>
+              {text}
             </li>
           ))}
         </ul>
@@ -205,21 +200,6 @@ export default function LoginPage() {
 
           {error && <Alert type="error">{error}</Alert>}
           {okMessage && <Alert type="success">{okMessage}</Alert>}
-
-          {resetLink && (
-            <div style={{ margin: "0.8rem 0", padding: "0.75rem", background: "rgba(99, 102, 241, 0.1)", borderRadius: "8px", border: "1px dashed #6366f1" }}>
-              <p style={{ margin: "0 0 0.5rem 0", fontSize: "0.85rem", fontWeight: "600", color: "#4338ca" }}>
-                Enlace directo generado (prueba rápida):
-              </p>
-              <a
-                href={resetLink}
-                className="btn-secondary btn-sm btn-block"
-                style={{ textAlign: "center", display: "block" }}
-              >
-                Abrir formulario de restablecimiento →
-              </a>
-            </div>
-          )}
 
           <button className="btn-primary btn-block auth-submit" disabled={busy}>
             {busy

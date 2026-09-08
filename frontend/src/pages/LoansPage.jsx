@@ -161,9 +161,14 @@ export default function LoansPage() {
       {ok && <Alert type="success">{ok}</Alert>}
 
       <section className="kpi-grid">
-        <KpiCard label="Préstamos activos" value={kpis.active} hint="Artículos en posesión externa" icon="📦" />
-        <KpiCard label="Préstamos vencidos" value={kpis.overdue} hint="Excedieron fecha límite" tone={kpis.overdue ? "danger" : "normal"} icon="⚠️" />
-        <KpiCard label="Devueltos" value={kpis.returned} hint="Reintegrados o cerrados" icon="✅" />
+        <KpiCard label="Préstamos activos" value={kpis.active} hint="Artículos en posesión externa" />
+        <KpiCard
+          label="Préstamos vencidos"
+          value={kpis.overdue}
+          hint="Excedieron fecha límite"
+          tone={kpis.overdue ? "danger" : "normal"}
+        />
+        <KpiCard label="Devueltos" value={kpis.returned} hint="Reintegrados o cerrados" />
       </section>
 
       <DataToolbar

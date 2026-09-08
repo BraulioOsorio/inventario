@@ -72,11 +72,11 @@ export default function ModuleTopbar({ onMenuToggle }) {
     if (link) navigate(link);
   }
 
-  function getCategoryIcon(cat) {
-    if (cat === "stock") return "📦";
-    if (cat === "order") return "🚚";
-    if (cat === "loan") return "🤝";
-    return "🔔";
+  function getCategoryBadge(cat) {
+    if (cat === "stock") return <span className="notif-tag notif-tag-stock">Stock</span>;
+    if (cat === "order") return <span className="notif-tag notif-tag-order">Pedido</span>;
+    if (cat === "loan") return <span className="notif-tag notif-tag-loan">Préstamo</span>;
+    return <span className="notif-tag">Aviso</span>;
   }
 
   return (
@@ -116,11 +116,9 @@ export default function ModuleTopbar({ onMenuToggle }) {
           </button>
 
           {open && (
-            <div className="notifications-popover">
+            <div className="notifications-popover glass-panel">
               <div className="notifications-head">
-                <h3>
-                  <span>🔔</span> Notificaciones
-                </h3>
+                <h3>Notificaciones</h3>
                 <span className="badge">
                   {summary.total_unread} {summary.total_unread === 1 ? "alerta" : "alertas"}
                 </span>
@@ -166,9 +164,11 @@ export default function ModuleTopbar({ onMenuToggle }) {
                     role="button"
                     tabIndex={0}
                   >
-                    <span className="notification-icon">{getCategoryIcon(item.category)}</span>
                     <div className="notification-content">
-                      <div className="notification-title">{item.title}</div>
+                      <div className="notification-meta-row">
+                        {getCategoryBadge(item.category)}
+                        <span className="notification-title">{item.title}</span>
+                      </div>
                       <div className="notification-desc">{item.message}</div>
                     </div>
                   </div>
@@ -176,7 +176,7 @@ export default function ModuleTopbar({ onMenuToggle }) {
 
                 {!filteredItems.length && (
                   <div className="notifications-empty">
-                    <p>🎉 No tienes alertas pendientes en esta categoría.</p>
+                    <p>No tienes alertas pendientes en esta categoría.</p>
                   </div>
                 )}
               </div>

@@ -71,10 +71,20 @@ export default function AlertsPage() {
       {error && <Alert type="error">{error}</Alert>}
 
       <section className="kpi-grid">
-        <KpiCard label="Agotados" value={stats.critical.length} hint="Stock en cero" tone="danger" icon="0" />
-        <KpiCard label="Stock bajo" value={stats.low.length} hint="Bajo el mínimo" tone="warn" icon="!" />
-        <KpiCard label="Pedidos próximos" value={dueOrders.length} hint="Avisados (1 sem antes)" tone={dueOrders.length ? "warn" : "normal"} icon="🚚" />
-        <KpiCard label="Préstamos vencidos" value={overdueLoans.length} hint="Requieren retorno" tone={overdueLoans.length ? "danger" : "normal"} icon="🤝" />
+        <KpiCard label="Agotados" value={stats.critical.length} hint="Stock en cero" tone="danger" />
+        <KpiCard label="Stock bajo" value={stats.low.length} hint="Bajo el mínimo" tone="warn" />
+        <KpiCard
+          label="Pedidos próximos"
+          value={dueOrders.length}
+          hint="Avisados (1 sem antes)"
+          tone={dueOrders.length ? "warn" : "normal"}
+        />
+        <KpiCard
+          label="Préstamos vencidos"
+          value={overdueLoans.length}
+          hint="Requieren retorno"
+          tone={overdueLoans.length ? "danger" : "normal"}
+        />
       </section>
 
       <DataToolbar
