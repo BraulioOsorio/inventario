@@ -14,8 +14,11 @@ class ProductRepository:
         owner_id: UUID,
         context_type: str | None = None,
         q: str | None = None,
+        active_only: bool = True,
     ) -> list[Product]:
-        query = self.db.query(Product).filter(Product.owner_id == owner_id, Product.is_active.is_(True))
+        query = self.db.query(Product).filter(Product.owner_id == owner_id)
+        if active_only:
+            query = query.filter(Product.is_active.is_(True))
         if context_type:
             query = query.filter(Product.context_type == context_type)
         if q:

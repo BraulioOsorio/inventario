@@ -40,6 +40,7 @@ export const api = {
     const q = new URLSearchParams();
     if (params.context_type) q.set("context_type", params.context_type);
     if (params.q) q.set("q", params.q);
+    if (params.active_only === false) q.set("active_only", "false");
     const qs = q.toString();
     return request(`/api/products${qs ? `?${qs}` : ""}`, { token });
   },

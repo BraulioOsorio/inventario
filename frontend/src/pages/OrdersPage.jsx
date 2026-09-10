@@ -11,6 +11,8 @@ import {
   KpiCard,
   Modal,
   PageHeader,
+  RowMenuIcons,
+  TableRowMenu,
 } from "../components/ui";
 import { formatMoney, orderStatusLabel } from "../utils/labels";
 
@@ -260,23 +262,22 @@ export default function OrdersPage() {
                       <span className="muted tiny">Al día</span>
                     )}
                   </td>
-                  <td className="cell-actions">
-                    {o.status !== "recibido" && (
-                      <button
-                        type="button"
-                        className="btn-secondary btn-sm"
-                        onClick={() => onMarkReceived(o.id)}
-                        title="Marcar como recibido"
-                      >
-                        ✓ Recibido
-                      </button>
-                    )}
-                    <button type="button" className="btn-secondary btn-sm" onClick={() => openEdit(o)}>
-                      Editar
-                    </button>
-                    <button type="button" className="btn-danger-ghost btn-sm" onClick={() => onDelete(o.id)}>
-                      Eliminar
-                    </button>
+                  <td className="cell-actions-menu">
+                    <TableRowMenu
+                      label={`Opciones del pedido ${o.title}`}
+                      items={[
+                        {
+                          id: "received",
+                          label: "Marcar recibido",
+                          icon: RowMenuIcons.check,
+                          primary: true,
+                          hidden: o.status === "recibido",
+                          onClick: () => onMarkReceived(o.id),
+                        },
+                        { id: "edit", label: "Editar", icon: RowMenuIcons.edit, onClick: () => openEdit(o) },
+                        { id: "delete", label: "Eliminar", icon: RowMenuIcons.trash, danger: true, onClick: () => onDelete(o.id) },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

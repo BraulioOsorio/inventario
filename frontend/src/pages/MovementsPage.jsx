@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
-import { Alert, FormActions, FormCard, FormField, FormRow, PageHeader } from "../components/ui";
+import { Alert, EmptyState, FormActions, FormCard, FormField, FormRow, PageHeader, Panel } from "../components/ui";
 import { movementTypeLabel } from "../utils/labels";
 
 const fmt = (n) =>
@@ -26,6 +26,7 @@ export default function MovementsPage() {
   const { token } = useAuth();
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [movements, setMovements] = useState([]);
   const [mode, setMode] = useState("pos");
   const [search, setSearch] = useState("");
@@ -36,11 +37,16 @@ export default function MovementsPage() {
   const [ok, setOk] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const byId = useMemo(() => productMap(products), [products]);
+  const byId = useMemo(() => productMap(allProducts), [allProducts]);
 
   async function load() {
-    const [p, m] = await Promise.all([api.listProducts(token), api.listMovements(token)]);
-    setProducts(p.filter((x) => x.is_active !== false));
+    const [active, catalog, m] = await Promise.all([
+      api.listProducts(token, { active_only: true }),
+      api.listProducts(token, { active_only: false }),
+      api.listMovements(token),
+    ]);
+    setProducts(active);
+    setAllProducts(catalog);
     setMovements(m);
   }
 
@@ -204,7 +210,7 @@ export default function MovementsPage() {
           <button
             key={m.id}
             type="button"
-            className={mode === m.id ? "active" : ""}
+            className={`filter-chip pos-mode-chip ${mode === m.id ? "active" : ""}`}
             onClick={() => setMode(m.id)}
           >
             <strong>{m.label}</strong>
@@ -336,9 +342,9 @@ export default function MovementsPage() {
                   onChange={(e) => setInForm({ ...inForm, product_id: e.target.value })}
                 >
                   <option value="">Selecciona un producto…</option>
-                  {products.map((p) => (
+                  {allProducts.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} — stock actual: {p.quantity}
+                      {p.name}{!p.is_active ? " (inactivo)" : ""} — stock: {p.quantity}
                     </option>
                   ))}
                 </select>
@@ -372,42 +378,56 @@ export default function MovementsPage() {
       )}
 
       {mode === "history" && (
-        <section className="glass-panel table-panel">
-          <div className="panel-head">
-            <h2>Historial de movimientos</h2>
-            <span className="badge">{movements.length} registros</span>
-          </div>
-          <div className="table-wrap">
-            <table className="table-erp">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Tipo</th>
-                  <th>Cant.</th>
-                  <th>Nota</th>
-                  <th>Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {movements.map((m) => (
-                  <tr key={m.id}>
-                    <td>{byId[m.product_id]?.name || "—"}</td>
-                    <td>
-                      <span className={`pill ${m.movement_type}`}>
-                        {movementTypeLabel(m.movement_type)}
-                      </span>
-                    </td>
-                    <td><strong>{m.quantity}</strong></td>
-                    <td>{m.note || "—"}</td>
-                    <td>{new Date(m.created_at).toLocaleString("es-CO")}</td>
-                  </tr>
-                ))}
-                {!movements.length && (
-                  <tr><td colSpan={5} className="muted cell-empty">Sin movimientos aún.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <section className="dash-section">
+          <Panel
+            title="Historial de movimientos"
+            action={<span className="badge">{movements.length} registros</span>}
+            className="table-panel movements-panel"
+          >
+            {movements.length ? (
+              <div className="table-wrap">
+                <table className="table-erp">
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th>Tipo</th>
+                      <th>Cantidad</th>
+                      <th>Nota</th>
+                      <th>Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {movements.map((m) => {
+                      const product = byId[m.product_id];
+                      return (
+                        <tr key={m.id}>
+                          <td>
+                            <strong>{product?.name || "—"}</strong>
+                            {product && !product.is_active && (
+                              <div className="muted tiny">Producto inactivo</div>
+                            )}
+                          </td>
+                          <td>
+                            <span className={`pill ${m.movement_type}`}>
+                              {movementTypeLabel(m.movement_type)}
+                            </span>
+                          </td>
+                          <td><strong>{m.quantity}</strong></td>
+                          <td className="muted">{m.note || "—"}</td>
+                          <td>{new Date(m.created_at).toLocaleString("es-CO")}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyState
+                title="Sin movimientos"
+                text="Registra ventas en el punto de venta o entradas de stock para ver el historial."
+              />
+            )}
+          </Panel>
         </section>
       )}
     </div>

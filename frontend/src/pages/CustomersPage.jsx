@@ -10,6 +10,8 @@ import {
   FormRow,
   Modal,
   PageHeader,
+  RowMenuIcons,
+  TableRowMenu,
 } from "../components/ui";
 
 const emptyCustomer = {
@@ -153,7 +155,7 @@ export default function CustomersPage() {
                 <th>Correo</th>
                 <th>Dirección</th>
                 <th>Notas</th>
-                <th></th>
+                <th className="cell-actions-menu"></th>
               </tr>
             </thead>
             <tbody>
@@ -167,13 +169,14 @@ export default function CustomersPage() {
                   <td className="muted" style={{ maxWidth: "200px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {c.notes || "—"}
                   </td>
-                  <td className="cell-actions">
-                    <button type="button" className="btn-secondary btn-sm" onClick={() => openEdit(c)}>
-                      Editar
-                    </button>
-                    <button type="button" className="btn-danger-ghost btn-sm" onClick={() => onDelete(c.id)}>
-                      Eliminar
-                    </button>
+                  <td className="cell-actions-menu">
+                    <TableRowMenu
+                      label={`Opciones de ${c.full_name}`}
+                      items={[
+                        { id: "edit", label: "Editar", icon: RowMenuIcons.edit, onClick: () => openEdit(c) },
+                        { id: "delete", label: "Eliminar", icon: RowMenuIcons.trash, danger: true, onClick: () => onDelete(c.id) },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

@@ -49,6 +49,8 @@ Estas directrices deben aplicarse en todos los componentes, vistas y estilos del
 - **Listas de alerta:** Usar `.alert-preview-list` / `.alert-preview-item` con borde lateral de severidad (`danger`, `warn`).
 - **Enlaces de panel:** Usar `.text-link` solo para enlaces de texto en encabezados de panel, nunca como botón de acción principal.
 - **Contacto en tablas:** Usar `.contact-meta` con prefijo "Tel." en CSS, sin emojis.
+- **Acciones en tablas:** Usar `TableRowMenu` con toggler (⋮) e iconos SVG. No usar botones de texto "Editar/Eliminar" en filas.
+- **Estado de productos:** `is_active` controla visibilidad en punto de venta. El catálogo lista con `active_only=false`; el POS solo consume `active_only=true`.
 
 ## 3. Jerarquía Visual y Capas (Stacking Context y Z-Index)
 - **Topbar:** La barra superior `.module-topbar` debe ser `position: sticky; top: 0; z-index: 100;` para que mantenga un contexto de apilamiento superior al cuerpo de la página.

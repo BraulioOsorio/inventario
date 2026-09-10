@@ -16,10 +16,13 @@ router = APIRouter()
 def list_products(
     context_type: str | None = Query(default=None),
     q: str | None = Query(default=None),
+    active_only: bool = Query(default=True),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return InventoryService(db).list_products(user, context_type=context_type, q=q)
+    return InventoryService(db).list_products(
+        user, context_type=context_type, q=q, active_only=active_only
+    )
 
 
 @router.post("", response_model=ProductOut, status_code=201)

@@ -11,6 +11,8 @@ import {
   KpiCard,
   Modal,
   PageHeader,
+  RowMenuIcons,
+  TableRowMenu,
 } from "../components/ui";
 import { loanStatusLabel } from "../utils/labels";
 
@@ -232,19 +234,21 @@ export default function LoansPage() {
                       {l.is_overdue ? "Vencido" : loanStatusLabel(l.status)}
                     </span>
                   </td>
-                  <td className="cell-actions">
-                    {l.status === "activo" && (
-                      <button
-                        type="button"
-                        className="btn-primary btn-sm"
-                        onClick={() => openReturn(l)}
-                      >
-                        ✓ Devolver
-                      </button>
-                    )}
-                    <button type="button" className="btn-danger-ghost btn-sm" onClick={() => onDelete(l.id)}>
-                      Eliminar
-                    </button>
+                  <td className="cell-actions-menu">
+                    <TableRowMenu
+                      label={`Opciones del préstamo de ${l.product_name}`}
+                      items={[
+                        {
+                          id: "return",
+                          label: "Registrar devolución",
+                          icon: RowMenuIcons.return,
+                          primary: true,
+                          hidden: l.status !== "activo",
+                          onClick: () => openReturn(l),
+                        },
+                        { id: "delete", label: "Eliminar", icon: RowMenuIcons.trash, danger: true, onClick: () => onDelete(l.id) },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

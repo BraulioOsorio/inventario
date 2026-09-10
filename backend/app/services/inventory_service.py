@@ -78,8 +78,16 @@ class InventoryService:
             out.has_movements = self.products.movement_count(product.id) > 0
         return out
 
-    def list_products(self, user: User, context_type: str | None = None, q: str | None = None) -> list[ProductOut]:
-        items = self.products.list_by_owner(user.id, context_type=context_type, q=q)
+    def list_products(
+        self,
+        user: User,
+        context_type: str | None = None,
+        q: str | None = None,
+        active_only: bool = True,
+    ) -> list[ProductOut]:
+        items = self.products.list_by_owner(
+            user.id, context_type=context_type, q=q, active_only=active_only
+        )
         moved_ids = self.products.ids_with_movements(user.id)
         return [self._product_out(item, moved_ids) for item in items]
 
@@ -122,6 +130,11 @@ class InventoryService:
         product = self.products.get(payload.product_id, user.id)
         if not product:
             raise HTTPException(status_code=404, detail="Producto no encontrado")
+        if not product.is_active and payload.movement_type in {"out", "adjust"}:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El producto está inactivo y no puede venderse ni ajustarse",
+            )
 
         if payload.movement_type == "in":
             product.quantity += payload.quantity

@@ -12,6 +12,8 @@ import {
   FormTabs,
   Modal,
   PageHeader,
+  RowMenuIcons,
+  TableRowMenu,
 } from "../components/ui";
 import { contextTypeLabel, formatMoney } from "../utils/labels";
 
@@ -48,7 +50,11 @@ export default function ProductsPage() {
 
   async function load() {
     const [p, c] = await Promise.all([
-      api.listProducts(token, { context_type: context || undefined, q: search || undefined }),
+      api.listProducts(token, {
+        context_type: context || undefined,
+        q: search || undefined,
+        active_only: false,
+      }),
       api.listCategories(token),
     ]);
     setProducts(p);
@@ -135,6 +141,19 @@ export default function ProductsPage() {
     }
   }
 
+  async function onToggleActive(product) {
+    const next = !product.is_active;
+    const action = next ? "activar" : "inactivar";
+    if (!confirm(`¿Deseas ${action} "${product.name}"?`)) return;
+    try {
+      await api.updateProduct(token, product.id, { is_active: next });
+      setOk(next ? "Producto activado." : "Producto inactivado. Ya no aparecerá en el punto de venta.");
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   function closeModal() {
     setOpenForm(false);
     setEditingId(null);
@@ -197,39 +216,62 @@ export default function ProductsPage() {
                 <th>Existencias</th>
                 <th>Mín.</th>
                 <th>Precio</th>
-                <th></th>
+                <th>Estado</th>
+                <th className="cell-actions-menu"></th>
               </tr>
             </thead>
             <tbody>
               {products.map((p) => (
-                <tr key={p.id} className={p.low_stock ? "row-warn" : ""}>
+                <tr
+                  key={p.id}
+                  className={`${p.low_stock && p.is_active ? "row-warn" : ""} ${!p.is_active ? "row-inactive" : ""}`}
+                >
                   <td><strong>{p.name}</strong></td>
                   <td><code>{p.sku}</code></td>
                   <td><span className="badge soft">{contextTypeLabel(p.context_type)}</span></td>
                   <td>
                     {p.quantity} {p.unit}
-                    {p.low_stock && <span className="pill out">Bajo</span>}
+                    {p.low_stock && p.is_active && <span className="pill out">Bajo</span>}
                   </td>
                   <td>{p.min_stock}</td>
                   <td>{formatMoney(p.unit_price)}</td>
-                  <td className="cell-actions">
-                    <button type="button" className="btn-secondary btn-sm" onClick={() => openEdit(p)}>
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-danger-ghost btn-sm"
-                      onClick={() => onDelete(p.id)}
-                      disabled={p.has_movements}
-                      title={p.has_movements ? "Tiene movimientos registrados" : "Eliminar producto"}
-                    >
-                      Eliminar
-                    </button>
+                  <td>
+                    <span className={`badge ${p.is_active ? "active-state" : "inactive"}`}>
+                      {p.is_active ? "Activo" : "Inactivo"}
+                    </span>
+                  </td>
+                  <td className="cell-actions-menu">
+                    <TableRowMenu
+                      label={`Opciones de ${p.name}`}
+                      items={[
+                        {
+                          id: "edit",
+                          label: "Editar",
+                          icon: RowMenuIcons.edit,
+                          onClick: () => openEdit(p),
+                        },
+                        {
+                          id: "toggle",
+                          label: p.is_active ? "Inactivar" : "Activar",
+                          icon: RowMenuIcons.power,
+                          onClick: () => onToggleActive(p),
+                        },
+                        {
+                          id: "delete",
+                          label: "Eliminar",
+                          icon: RowMenuIcons.trash,
+                          danger: true,
+                          disabled: p.has_movements,
+                          title: p.has_movements ? "Tiene movimientos registrados" : undefined,
+                          onClick: () => onDelete(p.id),
+                        },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}
               {!products.length && (
-                <tr><td colSpan={7} className="muted cell-empty">No hay productos registrados.</td></tr>
+                <tr><td colSpan={8} className="muted cell-empty">No hay productos registrados.</td></tr>
               )}
             </tbody>
           </table>

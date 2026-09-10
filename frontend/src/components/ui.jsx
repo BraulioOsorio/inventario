@@ -1,3 +1,102 @@
+import { useEffect, useRef, useState } from "react";
+
+export const RowMenuIcons = {
+  edit: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+    </svg>
+  ),
+  trash: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
+    </svg>
+  ),
+  power: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M12 2v10M18.36 6.64a9 9 0 1 1-12.73 0" />
+    </svg>
+  ),
+  check: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  ),
+  return: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M3 10h13a4 4 0 0 1 0 8H9M3 10l4-4M3 10l4 4" />
+    </svg>
+  ),
+  restock: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  ),
+  external: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M14 3h7v7M10 14 21 3M21 14v7h-7M3 10V3h7" />
+    </svg>
+  ),
+};
+
+export function TableRowMenu({ items, label = "Opciones de fila" }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const visible = items.filter((item) => !item.hidden);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    function handleClickOutside(event) {
+      if (ref.current && !ref.current.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  if (!visible.length) return null;
+
+  return (
+    <div className="table-row-menu" ref={ref}>
+      <button
+        type="button"
+        className="row-menu-trigger"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-label={label}
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <circle cx="12" cy="5" r="1.75" />
+          <circle cx="12" cy="12" r="1.75" />
+          <circle cx="12" cy="19" r="1.75" />
+        </svg>
+      </button>
+      {open && (
+        <div className="row-menu-popover" role="menu">
+          {visible.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="menuitem"
+              className={`row-menu-item ${item.danger ? "danger" : ""} ${item.primary ? "primary" : ""}`}
+              onClick={() => {
+                setOpen(false);
+                item.onClick?.();
+              }}
+              disabled={item.disabled}
+              title={item.title || item.label}
+            >
+              {item.icon && <span className="row-menu-icon">{item.icon}</span>}
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PageHeader({ kicker, title, subtitle, actions }) {
   return (
     <header className="page-head">

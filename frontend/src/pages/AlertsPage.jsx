@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
-import { Alert, DataToolbar, EmptyState, FormField, KpiCard, PageHeader, Panel } from "../components/ui";
+import { Alert, DataToolbar, EmptyState, FormField, KpiCard, PageHeader, Panel, RowMenuIcons, TableRowMenu } from "../components/ui";
 
 const FILTERS = [
   { id: "all", label: "Todos" },
@@ -19,6 +19,7 @@ function statusOf(product) {
 
 export default function AlertsPage() {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loans, setLoans] = useState([]);
@@ -130,7 +131,7 @@ export default function AlertsPage() {
                   <th>Stock actual</th>
                   <th>Mínimo</th>
                   <th>Faltante</th>
-                  <th>Acción</th>
+                  <th className="cell-actions-menu"></th>
                 </tr>
               </thead>
               <tbody>
@@ -152,13 +153,19 @@ export default function AlertsPage() {
                       <td>{p.quantity} {p.unit}</td>
                       <td>{p.min_stock}</td>
                       <td>{deficit > 0 ? `+${deficit}` : "—"}</td>
-                      <td>
-                        <Link
-                          to={`/movimientos?product=${p.id}&type=in`}
-                          className="btn-secondary btn-sm"
-                        >
-                          Reponer
-                        </Link>
+                      <td className="cell-actions-menu">
+                        <TableRowMenu
+                          label={`Opciones de ${p.name}`}
+                          items={[
+                            {
+                              id: "restock",
+                              label: "Reponer stock",
+                              icon: RowMenuIcons.restock,
+                              primary: true,
+                              onClick: () => navigate(`/movimientos?product=${p.id}&type=in`),
+                            },
+                          ]}
+                        />
                       </td>
                     </tr>
                   );
@@ -189,7 +196,7 @@ export default function AlertsPage() {
                   <th>Concepto</th>
                   <th>Programación</th>
                   <th>Total estimado</th>
-                  <th>Acción</th>
+                  <th className="cell-actions-menu"></th>
                 </tr>
               </thead>
               <tbody>
@@ -208,10 +215,13 @@ export default function AlertsPage() {
                       )}
                     </td>
                     <td>${Number(o.estimated_total || 0).toLocaleString("es-CO")}</td>
-                    <td>
-                      <Link to="/pedidos" className="btn-secondary btn-sm">
-                        Gestionar
-                      </Link>
+                    <td className="cell-actions-menu">
+                      <TableRowMenu
+                        label={`Opciones del pedido ${o.title}`}
+                        items={[
+                          { id: "manage", label: "Gestionar pedido", icon: RowMenuIcons.external, onClick: () => navigate("/pedidos") },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -236,7 +246,7 @@ export default function AlertsPage() {
                   <th>Prestatario</th>
                   <th>Cantidad</th>
                   <th>Venció el</th>
-                  <th>Acción</th>
+                  <th className="cell-actions-menu"></th>
                 </tr>
               </thead>
               <tbody>
@@ -249,10 +259,13 @@ export default function AlertsPage() {
                     </td>
                     <td>{l.quantity}</td>
                     <td><span className="text-danger">{l.due_date ? new Date(l.due_date).toLocaleDateString("es-CO") : "—"}</span></td>
-                    <td>
-                      <Link to="/prestamos" className="btn-primary btn-sm">
-                        Devolver
-                      </Link>
+                    <td className="cell-actions-menu">
+                      <TableRowMenu
+                        label={`Opciones del préstamo de ${l.product_name}`}
+                        items={[
+                          { id: "return", label: "Ir a devolución", icon: RowMenuIcons.return, primary: true, onClick: () => navigate("/prestamos") },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

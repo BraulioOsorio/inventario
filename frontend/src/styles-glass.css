@@ -728,6 +728,31 @@ textarea:focus {
   color: #4338ca;
 }
 
+.glass-tabs .filter-chip.pos-mode-chip {
+  border-radius: 14px !important;
+  width: 100%;
+  text-align: left;
+  display: grid !important;
+  gap: 0.15rem !important;
+  padding: 0.85rem 1rem !important;
+}
+
+.glass-tabs .filter-chip.pos-mode-chip strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.glass-tabs .filter-chip.pos-mode-chip small {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.glass-tabs .filter-chip.pos-mode-chip.active strong,
+.glass-tabs .filter-chip.pos-mode-chip.active small {
+  color: #ffffff !important;
+}
+
 .pos-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 420px);
@@ -1541,6 +1566,141 @@ textarea:focus {
   background: rgba(255, 255, 255, 0.45) !important;
   border: 1px solid rgba(255, 255, 255, 0.65) !important;
   backdrop-filter: blur(8px) !important;
+}
+
+/* ─── Menú de acciones en tablas (toggler ⋮) ─── */
+.table-row-menu {
+  position: relative;
+  display: inline-flex;
+  justify-content: flex-end;
+}
+
+.row-menu-trigger {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 0.55) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  color: #64748b !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 2px 8px rgba(31, 38, 135, 0.05) !important;
+  padding: 0 !important;
+}
+
+.row-menu-trigger svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.row-menu-trigger:hover,
+.row-menu-trigger[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: #4338ca !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.15) !important;
+}
+
+.row-menu-popover {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  right: 0 !important;
+  min-width: 168px !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(99, 102, 241, 0.1) !important;
+  padding: 0.35rem !important;
+  z-index: 1200 !important;
+  display: grid !important;
+  gap: 0.15rem !important;
+  animation: dropDown 0.15s ease-out !important;
+}
+
+.row-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  width: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 10px !important;
+  padding: 0.55rem 0.65rem !important;
+  font-size: 0.84rem !important;
+  font-weight: 600 !important;
+  color: #334155 !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  transition: background 0.12s ease !important;
+}
+
+.row-menu-item:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.08) !important;
+  color: #4338ca !important;
+}
+
+.row-menu-item.primary {
+  color: #4338ca !important;
+}
+
+.row-menu-item.danger {
+  color: #dc2626 !important;
+}
+
+.row-menu-item.danger:hover:not(:disabled) {
+  background: rgba(254, 226, 226, 0.65) !important;
+  color: #b91c1c !important;
+}
+
+.row-menu-item:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+}
+
+.row-menu-icon {
+  width: 16px !important;
+  height: 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.row-menu-icon svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+.cell-actions-menu {
+  width: 52px !important;
+  text-align: right !important;
+}
+
+.table-erp tbody tr.row-inactive {
+  opacity: 0.62 !important;
+}
+
+.table-erp tbody tr.row-inactive td strong {
+  color: #64748b !important;
+}
+
+.badge.inactive {
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+}
+
+.badge.active-state {
+  background: rgba(220, 252, 231, 0.85) !important;
+  color: #15803d !important;
+  border: 1px solid rgba(74, 222, 128, 0.35) !important;
 }
 
 /* Pills de estado adicionales */
