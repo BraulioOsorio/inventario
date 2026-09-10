@@ -225,7 +225,7 @@ export default function MovementsPage() {
             <div className="pos-search-wrap">
               <input
                 className="pos-search"
-                placeholder="Buscar producto por nombre o marca…"
+                placeholder="Nombre o marca (mín. 3 letras)"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />

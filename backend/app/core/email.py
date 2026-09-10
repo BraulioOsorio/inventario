@@ -316,13 +316,19 @@ Si no solicitaste este cambio, ignora este mensaje.
         if _send_via_resend_http(to_email, subject, html_content, plain_content, from_email):
             return True
 
-    # 3. Intentar SMTP tradicional
+    # 3. SMTP solo en desarrollo local (Render Free bloquea puertos 25/465/587)
     if settings.SMTP_HOST and settings.SMTP_USER:
-        if _send_via_smtp(to_email, subject, html_content, plain_content, from_email):
+        if settings.ENVIRONMENT == "production":
+            logger.warning(
+                "[AVISO] SMTP omitido en producción. Configura BREVO_API_KEY o RESEND_API_KEY "
+                "en Render para enviar correos por HTTPS (puerto 443)."
+            )
+        elif _send_via_smtp(to_email, subject, html_content, plain_content, from_email):
             return True
 
-    logger.warning(
-        f"[AVISO] No se pudo enviar el correo a {to_email}. "
-        f"En Render Free debes configurar la variable BREVO_API_KEY o RESEND_API_KEY (HTTPS puerto 443)."
-    )
+    if not settings.BREVO_API_KEY and not settings.RESEND_API_KEY:
+        logger.warning(
+            f"[AVISO] No se pudo enviar el correo a {to_email}. "
+            f"Configura BREVO_API_KEY o RESEND_API_KEY en las variables de entorno del servidor."
+        )
     return False

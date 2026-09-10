@@ -121,8 +121,8 @@ export default function ResetPasswordPage() {
             </>
           )}
 
-          <div style={{ textAlign: "center", marginTop: "1rem" }}>
-            <Link to="/login" className="text-link" style={{ fontSize: "0.9rem" }}>
+          <div className="auth-back-wrap">
+            <Link to="/login" className="btn-ghost auth-back-btn">
               ← Volver al inicio de sesión
             </Link>
           </div>

@@ -36,9 +36,15 @@ export default function LoginPage() {
         await register(fullName, email, password);
       } else if (mode === "forgot") {
         const res = await api.forgotPassword(email);
-        setOkMessage(
-          res.message || "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña."
-        );
+        if (res.email_sent) {
+          setOkMessage(
+            res.message || "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña."
+          );
+        } else {
+          setError(
+            "No se pudo enviar el correo de recuperación. El servicio de correo del servidor no está configurado. Contacta al administrador."
+          );
+        }
       }
     } catch (err) {
       setError(err.message || "No se pudo completar la operación");
@@ -121,17 +127,15 @@ export default function LoginPage() {
             </button>
           </div>
         ) : (
-          <div style={{ padding: "0 1.5rem", marginBottom: "0.5rem" }}>
+          <div className="auth-back-wrap">
             <button
               type="button"
-              className="text-link"
+              className="btn-ghost auth-back-btn"
               onClick={() => {
                 setMode("login");
                 setError("");
                 setOkMessage("");
-                setResetLink("");
               }}
-              style={{ fontSize: "0.9rem" }}
             >
               ← Volver a inicio de sesión
             </button>

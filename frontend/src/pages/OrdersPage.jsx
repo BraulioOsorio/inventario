@@ -192,9 +192,9 @@ export default function OrdersPage() {
             <option value="cancelado">Cancelados</option>
           </select>
         </FormField>
-        <FormField label="Buscar pedido o proveedor" className="toolbar-field grow" hint="Escribe al menos 3 letras">
+        <FormField label="Buscar pedido o proveedor" className="toolbar-field grow">
           <input
-            placeholder="Buscar por proveedor, título o productos…"
+            placeholder="Proveedor, título o productos (mín. 3 letras)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

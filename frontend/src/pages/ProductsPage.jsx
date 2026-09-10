@@ -190,9 +190,9 @@ export default function ProductsPage() {
             <option value="general">General</option>
           </select>
         </FormField>
-        <FormField label="Buscar producto" className="toolbar-field grow" hint="Escribe al menos 3 letras">
+        <FormField label="Buscar producto" className="toolbar-field grow">
           <input
-            placeholder="Nombre o marca"
+            placeholder="Nombre o marca (mín. 3 letras)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

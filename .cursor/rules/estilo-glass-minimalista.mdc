@@ -10,14 +10,16 @@ Estas directrices deben aplicarse en todos los componentes, vistas y estilos del
 ## 1. Estilo Glassmorphism Auténtico (Efecto Cristal Esmerilado)
 - **Fondo global visible:** El fondo del `body` utiliza un gradiente radial multicapa vibrante fijado (`background-attachment: fixed`).
 - **Contenedores transparentes:** Las capas envolventes como `.erp`, `.erp-main`, `.page` y contenedores generales **deben tener `background: transparent !important`**. Nunca colocar fondos opacos (grises o blancos sólidos) en los contenedores intermedios porque anulan el efecto de cristal.
-- **Superficies Glass:** Paneles (`.panel`), tarjetas (`.kpi`), barras de herramientas (`.data-toolbar`), modales (`.modal-card`) y menús emergentes (`.notifications-popover`) deben usar:
+- **Superficies Glass:** Paneles (`.panel`), tarjetas (`.kpi`), barras de herramientas (`.data-toolbar`), modales (`.modal-card`) y menús emergentes (`.notifications-popover`, `.row-menu-popover`) deben usar:
   - Fondo translúcido: `background: rgba(255, 255, 255, 0.58)` a `rgba(255, 255, 255, 0.75)`.
   - Desenfoque de fondo: `backdrop-filter: blur(18px) saturate(180%);` y `-webkit-backdrop-filter: blur(18px) saturate(180%);`.
   - Bordes translúcidos con resalte: `border: 1px solid rgba(255, 255, 255, 0.7);` con `box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.85);`.
   - Radio redondeado moderno: `border-radius: 16px` a `20px`.
+- **Elevación al hover:** Paneles del dashboard (`.panel.glass-panel`, `.valuation-card`) y KPIs deben elevarse suavemente con `transform: translateY(-2px)` y sombra más profunda al pasar el mouse.
 - **Botones con acabado Glass:**
   - Botón primario (`.btn-primary`): Gradiente vibrante con brillo translúcido y sombra de neón suave.
   - Botón secundario (`.btn-secondary`): Cristal esmerilado con texto contrastado y borde brillante.
+  - Botón fantasma (`.btn-ghost`): Acciones sutiles (actualizar, cancelar ligero).
   - Botón de peligro/cancelación (`.btn-danger-ghost`): Tinte sutil translúcido, nunca botón plano sin estilo.
 
 ## 2. Enfoque Minimalista y Limpieza Visual
@@ -25,6 +27,14 @@ Estas directrices deben aplicarse en todos los componentes, vistas y estilos del
 - **Tipografía clara y jerárquica:** El foco visual debe ser el dato numérico relevante y una etiqueta limpia en gris suave.
 - **Iconografía sobria:** Solo usar iconos SVG lineales y discretos en el menú de navegación y acciones clave.
 - **Espaciado balanceado:** Dejar respirar los bloques con márgenes y paddings generosos, evitando saturación de cajas.
+
+## 3. Jerarquía Visual y Capas (Stacking Context y Z-Index)
+- **Topbar:** La barra superior `.module-topbar` debe ser `position: sticky; top: 0; z-index: 1000;` para mantener contexto de apilamiento superior.
+- **Elementos flotantes (Campanita, Popovers, Dropdowns, Menús de tabla):**
+  - Deben tener `z-index: 1000` o superior y fondo de cristal con opacidad suficiente (`rgba(255, 255, 255, 0.88)`) para garantizar legibilidad.
+  - Los menús de tabla (`.row-menu-popover`) deben abrir hacia arriba (`.drop-up`) cuando no hay espacio abajo en la ventana.
+- **Modales:** Capa de fondo (`.modal-overlay`) con `backdrop-filter: blur(10px)` y `z-index: 2000`.
+- **Tablas con menús de acción:** Los contenedores `.table-panel` y `.table-wrap` **no deben usar `overflow: hidden`**. Usar `overflow-x: auto` y `overflow-y: visible` para que el menú ⋮ no se recorte en la última fila.
 
 ## 4. Tipografía Unificada (obligatorio)
 - **Una sola familia:** Usar **Manrope** (`--font`) en todo el sistema: títulos, cuerpo, botones, tablas, KPIs, modales y notificaciones.
@@ -36,24 +46,60 @@ Estas directrices deben aplicarse en todos los componentes, vistas y estilos del
   - `h2` panel: 1.1rem, peso 700.
   - Cuerpo: 0.88–0.92rem, peso 400–500.
   - Datos KPI: 2.15rem, peso 800.
+  - Valor del inventario (`.valuation-grid strong`): 1.35rem, peso 800.
 
-## 5. Uniformidad Visual y Componentes
-- **Espaciado del dashboard:** Usar `--space-section` (1.35rem) entre bloques y `--space-card` (1.1rem) entre tarjetas del grid.
+## 5. Formularios e Inputs (estándar obligatorio)
+- **Borde visible en todos los inputs:** Usar `--input-border: rgba(51, 65, 85, 0.24)` y hover `--input-border-hover: rgba(51, 65, 85, 0.38)`. Nunca inputs sin borde perceptible.
+- **Altura uniforme:** Todos los `input`, `select` y `textarea` usan `min-height: var(--input-h)` (2.75rem) en toolbars, modales y formularios.
+- **Fondo:** `rgba(255, 255, 255, 0.88)` a `0.96` en focus, con `border-radius: 12px`.
+- **Separación de campos:** `.form-row` gap 1rem; `.form-card-body` gap 1.1rem; cada `.form-field` con gap 0.45rem entre label e input.
+- **Secciones de formulario:** `.form-section` con borde `rgba(51, 65, 85, 0.14)` y fondo translúcido sutil.
+
+## 6. Búsqueda en Vivo (sin botón "Buscar")
+- **Prohibido** el botón "Buscar" en toolbars de listado. La búsqueda es automática mientras el usuario escribe.
+- **Umbral mínimo:** Activar filtro solo con **3 o más letras**. Con 0–2 letras mostrar el listado completo (sin parámetro `q`).
+- **Placeholder, no hint externo:** La indicación "(mín. 3 letras)" va **dentro del `placeholder` del input**, nunca como `hint` debajo del campo (evita desalinear el toolbar).
+- **Debounce:** Usar el hook `useDebouncedValue` (350ms) de `frontend/src/hooks/useDebouncedValue.js` y la utilidad `searchQuery()` para construir el parámetro de API.
+- **Búsqueda local (POS):** En punto de venta, filtrar productos en cliente con la misma regla de 3+ letras.
+
+## 7. Uniformidad Visual y Componentes
+- **Espaciado del dashboard:** Usar `--space-section` (1.35rem) entre bloques y `--space-card` (1.1rem) entre tarjetas del grid. Envolver secciones en `.dash-section`.
 - **Botones del sistema (solo estos):**
   - `.btn-primary` — acción principal (gradiente índigo).
   - `.btn-secondary` — acción secundaria (cristal esmerilado).
   - `.btn-ghost` — acciones sutiles (actualizar, cancelar ligero).
   - `.btn-danger-ghost` — eliminar o acciones destructivas.
-  - `.filter-chip` — filtros y pestañas (notificaciones, alertas, formularios).
+  - `.filter-chip` — filtros, pestañas, tabs de notificaciones, alertas, formularios y modo POS.
   - **Prohibido** usar botones planos sin clase, `text-link` como botón de acción, o estilos legacy con borde gris sólido.
 - **Listas de alerta:** Usar `.alert-preview-list` / `.alert-preview-item` con borde lateral de severidad (`danger`, `warn`).
 - **Enlaces de panel:** Usar `.text-link` solo para enlaces de texto en encabezados de panel, nunca como botón de acción principal.
 - **Contacto en tablas:** Usar `.contact-meta` con prefijo "Tel." en CSS, sin emojis.
-- **Acciones en tablas:** Usar `TableRowMenu` con toggler (⋮) e iconos SVG. No usar botones de texto "Editar/Eliminar" en filas.
-- **Estado de productos:** `is_active` controla visibilidad en punto de venta. El catálogo lista con `active_only=false`; el POS solo consume `active_only=true`.
 
-## 3. Jerarquía Visual y Capas (Stacking Context y Z-Index)
-- **Topbar:** La barra superior `.module-topbar` debe ser `position: sticky; top: 0; z-index: 100;` para que mantenga un contexto de apilamiento superior al cuerpo de la página.
-- **Elementos flotantes (Campanita, Popovers, Dropdowns):**
-  - Deben tener `z-index: 1000` o superior y fondo de cristal con opacidad suficiente (`rgba(255, 255, 255, 0.88)`) para garantizar total legibilidad y evitar que las tarjetas con `backdrop-filter` del contenido se monten por encima.
-- **Modales:** Capa de fondo (`.modal-overlay`) con `backdrop-filter: blur(10px)` y `z-index: 2000`.
+## 8. Tablas y Acciones en Filas
+- **Menú de acciones:** Usar el componente `TableRowMenu` con toggler (⋮) e iconos SVG de `RowMenuIcons`. **Prohibido** botones de texto "Editar/Eliminar" en celdas de tabla.
+- **Columna de acciones:** Usar clase `.cell-actions-menu` (ancho fijo ~52px, alineado a la derecha).
+- **Filas inactivas:** La clase `.row-inactive` atenúa solo las celdas de datos (`td:not(.cell-actions-menu)`). El botón ⋮ **siempre** mantiene opacidad 1 y el mismo estilo visual que filas activas.
+- **Tablas estándar:** Usar `.table-erp` dentro de `.table-wrap` dentro de `.panel.table-panel.glass-panel`. Incluir badge de conteo en `.panel-head`.
+- **Badges de estado:** `.badge.active-state` (verde) e `.badge.inactive` (gris) para productos.
+
+## 9. Gráficas y Visualizaciones del Dashboard
+- **Barras horizontales:** `.bar-track` con altura **7px** (delgadas). `.bar-fill` con `border-radius: 999px`.
+- **Donut de categorías:** `strokeWidth="10"` en SVG (no 16). Texto central legible en Manrope.
+- **Tarjeta de valoración:** `.valuation-grid` con 3 columnas; labels en uppercase 0.8rem peso 600; valores en 1.35rem peso 800; total principal en 1.65rem.
+
+## 10. Estado de Productos y Punto de Venta
+- **API:** Campo `is_active` en productos. Query `active_only=true` (default) para POS; `active_only=false` para catálogo/administración.
+- **Inactivar producto:** `PUT /api/products/{id}` con `{ "is_active": false }`. No aparece en punto de venta ni permite ventas/salidas.
+- **Reactivar:** Mismo endpoint con `{ "is_active": true }`.
+- **Entradas de stock:** Permitidas en productos inactivos (para reponer antes de reactivar).
+- **POS:** Tabs de modo con `.filter-chip.pos-mode-chip` dentro de `.glass-tabs`. Catálogo solo muestra productos activos con stock.
+
+## 11. Autenticación (Login / Recuperación)
+- Botón "Volver a inicio de sesión" con clase `.btn-ghost.auth-back-btn` dentro de `.auth-back-wrap`, nunca `text-link` suelto con borde legacy.
+- Si `email_sent` es `false` en forgot-password, mostrar alerta de error clara (no mensaje de éxito).
+- En producción (Render Free): correo vía `BREVO_API_KEY` o `RESEND_API_KEY` (HTTPS). SMTP está bloqueado.
+
+## 12. Notificaciones (Campanita)
+- Filtros con `.filter-chip` (no botones planos legacy).
+- Pie del popover: "Actualizar" con `.btn-ghost`, "Ver centro de alertas" con `.btn-secondary`.
+- Items de alerta con badge de categoría arriba, título debajo y descripción en gris suave.

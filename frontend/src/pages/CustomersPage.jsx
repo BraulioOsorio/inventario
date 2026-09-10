@@ -129,9 +129,9 @@ export default function CustomersPage() {
           </button>
         }
       >
-        <FormField label="Buscar cliente" className="toolbar-field grow" hint="Escribe al menos 3 letras">
+        <FormField label="Buscar cliente" className="toolbar-field grow">
           <input
-            placeholder="Buscar por nombre, documento, teléfono o correo…"
+            placeholder="Nombre, documento, teléfono o correo (mín. 3 letras)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
