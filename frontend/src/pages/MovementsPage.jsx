@@ -71,7 +71,7 @@ export default function MovementsPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return products;
+    if (!q || q.length < 3) return products;
     return products.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||

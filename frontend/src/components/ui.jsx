@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export const RowMenuIcons = {
   edit: (
@@ -40,8 +40,17 @@ export const RowMenuIcons = {
 
 export function TableRowMenu({ items, label = "Opciones de fila" }) {
   const [open, setOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
   const ref = useRef(null);
   const visible = items.filter((item) => !item.hidden);
+
+  useLayoutEffect(() => {
+    if (!open || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const estimatedMenuHeight = visible.length * 44 + 16;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    setDropUp(spaceBelow < estimatedMenuHeight + 12);
+  }, [open, visible.length]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -73,7 +82,7 @@ export function TableRowMenu({ items, label = "Opciones de fila" }) {
         </svg>
       </button>
       {open && (
-        <div className="row-menu-popover" role="menu">
+        <div className={`row-menu-popover ${dropUp ? "drop-up" : ""}`} role="menu">
           {visible.map((item) => (
             <button
               key={item.id}

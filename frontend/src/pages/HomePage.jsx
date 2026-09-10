@@ -94,14 +94,14 @@ function Donut({ products, categories }) {
   return (
     <div className="donut-wrap">
       <svg viewBox="0 0 140 140" className="donut" aria-hidden>
-        <circle cx="70" cy="70" r={r} fill="none" stroke="#e8eef5" strokeWidth="16" />
+        <circle cx="70" cy="70" r={r} fill="none" stroke="#e8eef5" strokeWidth="10" />
         <circle
           cx="70"
           cy="70"
           r={r}
           fill="none"
           stroke="#2f6fed"
-          strokeWidth="16"
+          strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={`${dash} ${c - dash}`}
           transform="rotate(-90 70 70)"

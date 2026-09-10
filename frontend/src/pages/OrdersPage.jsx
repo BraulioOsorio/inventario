@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { searchQuery, useDebouncedValue } from "../hooks/useDebouncedValue";
 import {
   Alert,
   DataToolbar,
@@ -40,12 +41,13 @@ export default function OrdersPage() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [busy, setBusy] = useState(false);
+  const debouncedSearch = useDebouncedValue(search);
 
   async function load() {
     try {
       const list = await api.listOrders(token, {
         status: statusFilter || undefined,
-        q: search || undefined,
+        q: searchQuery(debouncedSearch),
       });
       setOrders(list);
     } catch (err) {
@@ -56,7 +58,7 @@ export default function OrdersPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, statusFilter]);
+  }, [token, statusFilter, debouncedSearch]);
 
   const kpis = useMemo(() => {
     const total = orders.length;
@@ -190,17 +192,13 @@ export default function OrdersPage() {
             <option value="cancelado">Cancelados</option>
           </select>
         </FormField>
-        <FormField label="Buscar pedido o proveedor" className="toolbar-field grow">
+        <FormField label="Buscar pedido o proveedor" className="toolbar-field grow" hint="Escribe al menos 3 letras">
           <input
             placeholder="Buscar por proveedor, título o productos…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && load()}
           />
         </FormField>
-        <button type="button" className="btn-secondary toolbar-btn" onClick={load}>
-          Buscar
-        </button>
       </DataToolbar>
 
       <section className="panel table-panel panel-elevated glass-panel">

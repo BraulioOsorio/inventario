@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { searchQuery, useDebouncedValue } from "../hooks/useDebouncedValue";
 import {
   Alert,
   DataToolbar,
@@ -47,12 +48,13 @@ export default function ProductsPage() {
   const [busy, setBusy] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [tab, setTab] = useState("general");
+  const debouncedSearch = useDebouncedValue(search);
 
   async function load() {
     const [p, c] = await Promise.all([
       api.listProducts(token, {
         context_type: context || undefined,
-        q: search || undefined,
+        q: searchQuery(debouncedSearch),
         active_only: false,
       }),
       api.listCategories(token),
@@ -64,7 +66,7 @@ export default function ProductsPage() {
   useEffect(() => {
     load().catch((e) => setError(e.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, context]);
+  }, [token, context, debouncedSearch]);
 
   function openCreate() {
     setForm(empty);
@@ -188,17 +190,13 @@ export default function ProductsPage() {
             <option value="general">General</option>
           </select>
         </FormField>
-        <FormField label="Buscar producto" className="toolbar-field grow">
+        <FormField label="Buscar producto" className="toolbar-field grow" hint="Escribe al menos 3 letras">
           <input
             placeholder="Nombre o marca"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && load().catch((err) => setError(err.message))}
           />
         </FormField>
-        <button type="button" className="btn-secondary toolbar-btn" onClick={() => load().catch((err) => setError(err.message))}>
-          Buscar
-        </button>
       </DataToolbar>
 
       <section className="panel table-panel panel-elevated glass-panel">

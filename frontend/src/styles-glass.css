@@ -645,25 +645,56 @@ main {
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
 }
 
-/* ─── Entradas y Controles Glass ─── */
+/* ─── Entradas y Controles Glass (borde estándar visible) ─── */
 input,
 select,
 textarea {
-  background: rgba(255, 255, 255, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  border: 1px solid rgba(51, 65, 85, 0.24) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03), 0 2px 8px rgba(31, 38, 135, 0.03) !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04) !important;
   border-radius: 12px !important;
   color: #1e293b !important;
+  min-height: var(--input-h) !important;
+}
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: rgba(51, 65, 85, 0.38) !important;
 }
 input:focus,
 select:focus,
 textarea:focus {
-  background: rgba(255, 255, 255, 0.85) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18), inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
   outline: none !important;
+}
+
+.form-card-body {
+  gap: 1.1rem !important;
+}
+
+.form-row {
+  gap: 1rem !important;
+}
+
+.form-section {
+  border-color: rgba(51, 65, 85, 0.14) !important;
+  background: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Paneles del dashboard con elevación al hover */
+.panel.glass-panel,
+.valuation-card.glass-panel {
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.panel.glass-panel:hover,
+.valuation-card.glass-panel:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 14px 40px rgba(31, 38, 135, 0.11), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
 }
 
 .modal-overlay {
@@ -1254,17 +1285,28 @@ textarea:focus {
 .page-dashboard .movements-panel,
 .glass-panel.table-panel {
   border-radius: 18px;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.panel.table-panel,
+.glass-panel.table-panel {
+  overflow: visible !important;
 }
 
 .panel .table-wrap,
 .glass-panel .table-wrap {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.38);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  overflow: hidden;
+  border: 1px solid rgba(51, 65, 85, 0.12);
+  overflow-x: auto;
+  overflow-y: visible;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  padding-bottom: 0.35rem;
+}
+
+.table-erp {
+  overflow: visible !important;
 }
 
 .table-erp tbody tr:last-child td:first-child {
@@ -1563,9 +1605,31 @@ textarea:focus {
   padding: 1.15rem 1.35rem !important;
 }
 .valuation-grid > div {
-  background: rgba(255, 255, 255, 0.45) !important;
-  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  background: rgba(255, 255, 255, 0.55) !important;
+  border: 1px solid rgba(51, 65, 85, 0.14) !important;
   backdrop-filter: blur(8px) !important;
+  padding: 0.8rem 0.75rem !important;
+}
+
+.valuation-grid small {
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+}
+
+.valuation-grid strong {
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+}
+
+.valuation-head strong {
+  font-size: 1.65rem !important;
+}
+
+.data-toolbar .form-field input,
+.data-toolbar .form-field select {
+  min-height: var(--input-h) !important;
 }
 
 /* ─── Menú de acciones en tablas (toggler ⋮) ─── */
@@ -1609,6 +1673,7 @@ textarea:focus {
 .row-menu-popover {
   position: absolute !important;
   top: calc(100% + 6px) !important;
+  bottom: auto !important;
   right: 0 !important;
   min-width: 168px !important;
   background: rgba(255, 255, 255, 0.94) !important;
@@ -1622,6 +1687,17 @@ textarea:focus {
   display: grid !important;
   gap: 0.15rem !important;
   animation: dropDown 0.15s ease-out !important;
+}
+
+.row-menu-popover.drop-up {
+  top: auto !important;
+  bottom: calc(100% + 6px) !important;
+  animation: dropUp 0.15s ease-out !important;
+}
+
+@keyframes dropUp {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .row-menu-item {
@@ -1683,12 +1759,24 @@ textarea:focus {
   text-align: right !important;
 }
 
-.table-erp tbody tr.row-inactive {
-  opacity: 0.62 !important;
+.table-erp tbody tr.row-inactive td:not(.cell-actions-menu) {
+  opacity: 0.62;
 }
 
 .table-erp tbody tr.row-inactive td strong {
   color: #64748b !important;
+}
+
+.table-erp tbody tr.row-inactive .cell-actions-menu,
+.table-erp tbody tr.row-inactive .row-menu-trigger {
+  opacity: 1 !important;
+}
+
+.row-menu-trigger {
+  opacity: 1 !important;
+  color: #475569 !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(51, 65, 85, 0.18) !important;
 }
 
 .badge.inactive {

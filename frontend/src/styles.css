@@ -18,6 +18,8 @@
   --radius: 18px;
   --radius-sm: 12px;
   --input-h: 2.75rem;
+  --input-border: rgba(51, 65, 85, 0.24);
+  --input-border-hover: rgba(51, 65, 85, 0.38);
   --font: "Manrope", system-ui, -apple-system, sans-serif;
   font-family: var(--font);
   color: var(--ink);
@@ -414,7 +416,7 @@ code {
 
 .form-field {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.45rem;
   min-width: 0;
 }
 .form-label {
@@ -436,8 +438,8 @@ code {
 input, select, textarea {
   width: 100%;
   min-height: var(--input-h);
-  border: 1px solid var(--line);
-  background: #fff;
+  border: 1px solid var(--input-border);
+  background: rgba(255, 255, 255, 0.92);
   border-radius: var(--radius-sm);
   padding: 0.65rem 0.9rem;
   color: var(--ink);
@@ -461,7 +463,7 @@ textarea::placeholder {
 .form-field select:hover,
 .form-field textarea:hover,
 input:hover, select:hover, textarea:hover {
-  border-color: #b8c8dc;
+  border-color: var(--input-border-hover);
 }
 .form-field input:focus,
 .form-field select:focus,
@@ -651,7 +653,7 @@ tbody tr:hover { background: #f8fafc; }
 }
 .bar-meta span { color: var(--muted); }
 .bar-track {
-  height: 12px;
+  height: 7px;
   border-radius: 999px;
   background: #e8eef5;
   overflow: hidden;
@@ -893,22 +895,29 @@ tbody tr:hover { background: #f8fafc; }
 .valuation-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
+  gap: 0.65rem;
 }
 .valuation-grid > div {
   background: var(--bg);
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--input-border);
   border-radius: 12px;
-  padding: 0.55rem 0.65rem;
+  padding: 0.75rem 0.85rem;
+  text-align: center;
 }
 .valuation-grid small {
   display: block;
   color: var(--muted);
-  font-size: 0.72rem;
-  margin-bottom: 0.15rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .valuation-grid strong {
-  font-size: 1rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.1;
 }
 
 .page-dashboard {

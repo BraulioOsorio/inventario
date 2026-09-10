@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { searchQuery, useDebouncedValue } from "../hooks/useDebouncedValue";
 import {
   Alert,
   DataToolbar,
@@ -33,10 +34,11 @@ export default function CustomersPage() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [busy, setBusy] = useState(false);
+  const debouncedSearch = useDebouncedValue(search);
 
   async function load() {
     try {
-      const list = await api.listCustomers(token, { q: search || undefined });
+      const list = await api.listCustomers(token, { q: searchQuery(debouncedSearch) });
       setCustomers(list);
     } catch (err) {
       setError(err.message);
@@ -46,7 +48,7 @@ export default function CustomersPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, debouncedSearch]);
 
   function openCreate() {
     setForm(emptyCustomer);
@@ -127,17 +129,13 @@ export default function CustomersPage() {
           </button>
         }
       >
-        <FormField label="Buscar cliente" className="toolbar-field grow">
+        <FormField label="Buscar cliente" className="toolbar-field grow" hint="Escribe al menos 3 letras">
           <input
             placeholder="Buscar por nombre, documento, teléfono o correo…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && load()}
           />
         </FormField>
-        <button type="button" className="btn-secondary toolbar-btn" onClick={load}>
-          Buscar
-        </button>
       </DataToolbar>
 
       <section className="panel table-panel panel-elevated glass-panel">
