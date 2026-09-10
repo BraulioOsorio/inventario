@@ -225,7 +225,7 @@ export default function OrdersPage() {
                   <td>
                     <strong>{o.supplier_name}</strong>
                     {o.supplier_contact && (
-                      <div className="muted tiny">📞 {o.supplier_contact}</div>
+                      <div className="muted tiny contact-meta">{o.supplier_contact}</div>
                     )}
                   </td>
                   <td>
@@ -238,7 +238,7 @@ export default function OrdersPage() {
                   </td>
                   <td>
                     {o.is_monthly_recurring ? (
-                      <span className="badge soft">📅 Mensual (día {o.monthly_day})</span>
+                      <span className="badge soft">Mensual · día {o.monthly_day}</span>
                     ) : o.expected_date ? (
                       <span>{new Date(o.expected_date).toLocaleDateString("es-CO")}</span>
                     ) : (

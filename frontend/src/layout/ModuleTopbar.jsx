@@ -125,34 +125,21 @@ export default function ModuleTopbar({ onMenuToggle }) {
               </div>
 
               <div className="notifications-filters">
-                <button
-                  type="button"
-                  className={filter === "all" ? "active" : ""}
-                  onClick={() => setFilter("all")}
-                >
-                  Todas ({summary.items.length})
-                </button>
-                <button
-                  type="button"
-                  className={filter === "stock" ? "active" : ""}
-                  onClick={() => setFilter("stock")}
-                >
-                  Stock ({summary.items.filter((i) => i.category === "stock").length})
-                </button>
-                <button
-                  type="button"
-                  className={filter === "order" ? "active" : ""}
-                  onClick={() => setFilter("order")}
-                >
-                  Pedidos ({summary.items.filter((i) => i.category === "order").length})
-                </button>
-                <button
-                  type="button"
-                  className={filter === "loan" ? "active" : ""}
-                  onClick={() => setFilter("loan")}
-                >
-                  Préstamos ({summary.items.filter((i) => i.category === "loan").length})
-                </button>
+                {[
+                  { id: "all", label: "Todas", count: summary.items.length },
+                  { id: "stock", label: "Stock", count: summary.items.filter((i) => i.category === "stock").length },
+                  { id: "order", label: "Pedidos", count: summary.items.filter((i) => i.category === "order").length },
+                  { id: "loan", label: "Préstamos", count: summary.items.filter((i) => i.category === "loan").length },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className={`filter-chip ${filter === tab.id ? "active" : ""}`}
+                    onClick={() => setFilter(tab.id)}
+                  >
+                    {tab.label} ({tab.count})
+                  </button>
+                ))}
               </div>
 
               <div className="notifications-list">
@@ -167,8 +154,8 @@ export default function ModuleTopbar({ onMenuToggle }) {
                     <div className="notification-content">
                       <div className="notification-meta-row">
                         {getCategoryBadge(item.category)}
-                        <span className="notification-title">{item.title}</span>
                       </div>
+                      <div className="notification-title">{item.title}</div>
                       <div className="notification-desc">{item.message}</div>
                     </div>
                   </div>
@@ -184,18 +171,22 @@ export default function ModuleTopbar({ onMenuToggle }) {
               <div className="notification-foot">
                 <button
                   type="button"
-                  className="text-link"
+                  className="btn-ghost btn-sm"
                   onClick={fetchNotifications}
                   disabled={loading}
                 >
-                  {loading ? "Actualizando…" : "↻ Actualizar"}
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                    <path d="M21 3v6h-6" />
+                  </svg>
+                  {loading ? "Actualizando…" : "Actualizar"}
                 </button>
                 <Link
                   to="/alertas"
-                  className="text-link"
+                  className="btn-secondary btn-sm"
                   onClick={() => setOpen(false)}
                 >
-                  Ver centro de alertas →
+                  Ver centro de alertas
                 </Link>
               </div>
             </div>

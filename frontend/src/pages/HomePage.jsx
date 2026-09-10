@@ -162,15 +162,22 @@ export default function HomePage() {
     return map;
   }, [products]);
 
+  const priorityAlerts = useMemo(
+    () => [...critical, ...lowItems].slice(0, 5),
+    [critical, lowItems]
+  );
+
   return (
     <div className="page page-dashboard">
       <PageHeader
+        kicker="Panel de inicio"
         title={`Bienvenido, ${user?.full_name?.split(" ")[0] || "usuario"}`}
-        subtitle="Vista general del inventario · indicadores, alertas y actividad reciente."
+        subtitle="Vista general del inventario con indicadores, alertas y actividad reciente."
       />
 
       {error && <Alert>{error}</Alert>}
 
+      <section className="dash-section">
       <section className="kpi-grid">
         <KpiCard label="Productos activos" value={products.length} hint="Ítems en catálogo" />
         <KpiCard label="Unidades en stock" value={units} hint="Cantidad total" />
@@ -189,8 +196,9 @@ export default function HomePage() {
         <KpiCard label="Préstamos activos" value={activeLoans.length} hint="Artículos prestados" />
         <KpiCard label="Movimientos" value={movements.length} hint="Registros históricos" />
       </section>
+      </section>
 
-      <section className="dash-grid dash-grid-home">
+      <section className="dash-section dash-grid dash-grid-home">
         <Panel
           title="Distribución por contexto"
           action={<Link to="/productos" className="text-link">Ver catálogo</Link>}
@@ -208,7 +216,7 @@ export default function HomePage() {
         <ValuationCard units={units} value={value} products={products.length} />
       </section>
 
-      <section className="dash-grid dash-grid-home">
+      <section className="dash-section dash-grid dash-grid-home">
         <Panel title="Productos con más movimiento" action={<Link to="/movimientos" className="text-link">Punto de venta</Link>}>
           <TopMovers movements={movements} products={products} />
         </Panel>
@@ -217,18 +225,21 @@ export default function HomePage() {
           <Donut products={products} categories={categories} />
         </Panel>
 
-        <Panel title="Alertas prioritarias" action={<Link to="/alertas" className="text-link">Centro de alertas</Link>}>
-          {lowItems.length || critical.length ? (
-            <ul className="plain-list">
-              {[...critical, ...lowItems].slice(0, 5).map((p) => (
-                <li key={p.id}>
-                  <div>
-                    <strong>{p.name}</strong>
-                    <div className="muted tiny">{Number(p.quantity) <= 0 ? "Agotado" : "Stock bajo"}</div>
-                  </div>
-                  <span>{p.quantity} / mín {p.min_stock}</span>
-                </li>
-              ))}
+        <Panel title="Alertas prioritarias" action={<Link to="/alertas" className="text-link">Centro de alertas →</Link>}>
+          {priorityAlerts.length ? (
+            <ul className="alert-preview-list">
+              {priorityAlerts.map((p) => {
+                const isCritical = Number(p.quantity) <= 0;
+                return (
+                  <li key={p.id} className={`alert-preview-item ${isCritical ? "danger" : "warn"}`}>
+                    <div>
+                      <strong>{p.name}</strong>
+                      <div className="muted tiny">{isCritical ? "Agotado" : "Stock bajo"}</div>
+                    </div>
+                    <span className="alert-preview-qty">{p.quantity} / mín {p.min_stock}</span>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <EmptyState title="Sin alertas" text="Todo el stock está en rango." />
@@ -236,6 +247,7 @@ export default function HomePage() {
         </Panel>
       </section>
 
+      <section className="dash-section">
       <Panel
         title="Últimos movimientos"
         action={<Link to="/movimientos" className="text-link">Abrir módulo</Link>}
@@ -278,6 +290,7 @@ export default function HomePage() {
           />
         )}
       </Panel>
+      </section>
     </div>
   );
 }

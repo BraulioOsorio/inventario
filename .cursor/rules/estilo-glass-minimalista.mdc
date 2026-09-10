@@ -26,7 +26,31 @@ Estas directrices deben aplicarse en todos los componentes, vistas y estilos del
 - **Iconografía sobria:** Solo usar iconos SVG lineales y discretos en el menú de navegación y acciones clave.
 - **Espaciado balanceado:** Dejar respirar los bloques con márgenes y paddings generosos, evitando saturación de cajas.
 
-## 3. Jerarquía Visual y Capas (Stacking Context & Z-Index)
+## 4. Tipografía Unificada (obligatorio)
+- **Una sola familia:** Usar **Manrope** (`--font`) en todo el sistema: títulos, cuerpo, botones, tablas, KPIs, modales y notificaciones.
+- **Prohibido mezclar fuentes decorativas** (serif, display, etc.) con la fuente base del UI.
+- **Pesos permitidos:** 400 (cuerpo), 500 (subtítulos), 600 (etiquetas y botones), 700 (títulos de sección), 800 (datos numéricos KPI).
+- **Jerarquía:**
+  - `kicker`: 0.72rem, uppercase, letter-spacing 0.12em, peso 700.
+  - `h1` página: clamp(1.45rem, 2.8vw, 2rem), peso 700.
+  - `h2` panel: 1.1rem, peso 700.
+  - Cuerpo: 0.88–0.92rem, peso 400–500.
+  - Datos KPI: 2.15rem, peso 800.
+
+## 5. Uniformidad Visual y Componentes
+- **Espaciado del dashboard:** Usar `--space-section` (1.35rem) entre bloques y `--space-card` (1.1rem) entre tarjetas del grid.
+- **Botones del sistema (solo estos):**
+  - `.btn-primary` — acción principal (gradiente índigo).
+  - `.btn-secondary` — acción secundaria (cristal esmerilado).
+  - `.btn-ghost` — acciones sutiles (actualizar, cancelar ligero).
+  - `.btn-danger-ghost` — eliminar o acciones destructivas.
+  - `.filter-chip` — filtros y pestañas (notificaciones, alertas, formularios).
+  - **Prohibido** usar botones planos sin clase, `text-link` como botón de acción, o estilos legacy con borde gris sólido.
+- **Listas de alerta:** Usar `.alert-preview-list` / `.alert-preview-item` con borde lateral de severidad (`danger`, `warn`).
+- **Enlaces de panel:** Usar `.text-link` solo para enlaces de texto en encabezados de panel, nunca como botón de acción principal.
+- **Contacto en tablas:** Usar `.contact-meta` con prefijo "Tel." en CSS, sin emojis.
+
+## 3. Jerarquía Visual y Capas (Stacking Context y Z-Index)
 - **Topbar:** La barra superior `.module-topbar` debe ser `position: sticky; top: 0; z-index: 100;` para que mantenga un contexto de apilamiento superior al cuerpo de la página.
 - **Elementos flotantes (Campanita, Popovers, Dropdowns):**
   - Deben tener `z-index: 1000` o superior y fondo de cristal con opacidad suficiente (`rgba(255, 255, 255, 0.88)`) para garantizar total legibilidad y evitar que las tarjetas con `backdrop-filter` del contenido se monten por encima.

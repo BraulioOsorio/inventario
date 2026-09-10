@@ -18,7 +18,8 @@
   --radius: 18px;
   --radius-sm: 12px;
   --input-h: 2.75rem;
-  font-family: "Manrope", system-ui, sans-serif;
+  --font: "Manrope", system-ui, -apple-system, sans-serif;
+  font-family: var(--font);
   color: var(--ink);
   background: var(--bg);
 }
@@ -27,13 +28,16 @@
 html, body, #root { min-height: 100%; }
 body {
   margin: 0;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background:
     radial-gradient(900px 420px at 100% 0%, #e4eefc 0%, transparent 55%),
     radial-gradient(700px 380px at 0% 100%, #e8f4ee 0%, transparent 50%),
     var(--bg);
 }
-h1, h2, .brand strong {
-  font-family: "Fraunces", Georgia, serif;
+h1, h2, h3, h4, .brand strong {
+  font-family: var(--font);
   letter-spacing: -0.02em;
   margin: 0;
 }
@@ -308,7 +312,8 @@ code {
   display: block;
   margin-top: 0.45rem;
   font-size: clamp(1.4rem, 3vw, 1.75rem);
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font);
+  font-weight: 800;
 }
 .kpi small { color: var(--muted); font-size: 0.82rem; }
 .kpi-warn strong { color: var(--warn); }
@@ -365,7 +370,8 @@ code {
 }
 .form-card-head h2 {
   font-size: 1.15rem;
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font);
+  font-weight: 700;
   margin-bottom: 0.25rem;
 }
 .form-card-head p {
@@ -609,7 +615,14 @@ tbody tr:hover { background: #f8fafc; }
 .plain-list.dense li { flex-direction: column; align-items: start; }
 .plain-list span { color: var(--muted); font-size: 0.86rem; }
 
-.text-link { color: var(--blue); font-weight: 700; font-size: 0.9rem; }
+.text-link {
+  color: #4338ca;
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.text-link:hover { color: #6366f1; }
 .alert {
   border-radius: var(--radius-sm);
   padding: 0.85rem 1rem;
@@ -872,8 +885,9 @@ tbody tr:hover { background: #f8fafc; }
   font-weight: 700;
 }
 .valuation-head strong {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font);
   font-size: 1.55rem;
+  font-weight: 800;
   color: var(--ink);
 }
 .valuation-grid {
@@ -897,8 +911,18 @@ tbody tr:hover { background: #f8fafc; }
   font-size: 1rem;
 }
 
+.page-dashboard {
+  gap: 1.35rem;
+}
+
+.dash-section {
+  display: grid;
+  gap: 1.1rem;
+}
+
 .dash-grid-home {
-  grid-template-columns: 1.2fr 0.8fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.1rem;
 }
 .dash-grid-home .span-2 {
   grid-column: span 2;
@@ -936,7 +960,8 @@ tbody tr:hover { background: #f8fafc; }
 }
 .modal-head h2 {
   font-size: 1.15rem;
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font);
+  font-weight: 700;
 }
 .modal-head p {
   margin: 0.2rem 0 0;

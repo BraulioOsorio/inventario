@@ -61,7 +61,7 @@ export default function AlertsPage() {
   }, [filter, stats]);
 
   return (
-    <div className="page page-module">
+    <div className="page page-module page-dashboard">
       <PageHeader
         kicker="Inventario"
         title="Centro de alertas"
@@ -70,7 +70,7 @@ export default function AlertsPage() {
 
       {error && <Alert type="error">{error}</Alert>}
 
-      <section className="kpi-grid">
+      <section className="dash-section kpi-grid">
         <KpiCard label="Agotados" value={stats.critical.length} hint="Stock en cero" tone="danger" />
         <KpiCard label="Stock bajo" value={stats.low.length} hint="Bajo el mínimo" tone="warn" />
         <KpiCard
@@ -87,10 +87,11 @@ export default function AlertsPage() {
         />
       </section>
 
+      <section className="dash-section">
       <DataToolbar
         actions={
           <Link to="/movimientos" className="btn-primary btn-sm">
-            + Registrar entrada
+            Registrar entrada
           </Link>
         }
       >
@@ -117,7 +118,7 @@ export default function AlertsPage() {
         </div>
       </DataToolbar>
 
-      <Panel title="Productos a revisar" action={<span className="badge">{visible.length} ítems</span>}>
+      <Panel title="Productos a revisar" action={<span className="badge">{visible.length} ítems</span>} className="table-panel">
         {visible.length ? (
           <div className="table-wrap">
             <table className="table-erp">
@@ -196,12 +197,12 @@ export default function AlertsPage() {
                   <tr key={o.id} className="row-warn">
                     <td>
                       <strong>{o.supplier_name}</strong>
-                      {o.supplier_contact && <div className="muted tiny">📞 {o.supplier_contact}</div>}
+                      {o.supplier_contact && <div className="muted tiny contact-meta">{o.supplier_contact}</div>}
                     </td>
                     <td>{o.title}</td>
                     <td>
                       {o.is_monthly_recurring ? (
-                        <span className="badge soft">📅 Mensual día {o.monthly_day}</span>
+                        <span className="badge soft">Mensual · día {o.monthly_day}</span>
                       ) : (
                         <span>{o.expected_date ? new Date(o.expected_date).toLocaleDateString("es-CO") : "—"}</span>
                       )}
@@ -244,7 +245,7 @@ export default function AlertsPage() {
                     <td><strong>{l.product_name}</strong></td>
                     <td>
                       <strong>{l.borrower_name}</strong>
-                      {l.borrower_contact && <div className="muted tiny">📞 {l.borrower_contact}</div>}
+                      {l.borrower_contact && <div className="muted tiny contact-meta">{l.borrower_contact}</div>}
                     </td>
                     <td>{l.quantity}</td>
                     <td><span className="text-danger">{l.due_date ? new Date(l.due_date).toLocaleDateString("es-CO") : "—"}</span></td>
@@ -260,6 +261,7 @@ export default function AlertsPage() {
           </div>
         </Panel>
       )}
+      </section>
     </div>
   );
 }

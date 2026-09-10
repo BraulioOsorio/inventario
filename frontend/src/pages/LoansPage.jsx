@@ -212,7 +212,7 @@ export default function LoansPage() {
                   <td><strong>{l.product_name || "Producto"}</strong></td>
                   <td>
                     <strong>{l.borrower_name}</strong>
-                    {l.borrower_contact && <div className="muted tiny">📞 {l.borrower_contact}</div>}
+                    {l.borrower_contact && <div className="muted tiny contact-meta">{l.borrower_contact}</div>}
                     {l.customer_name && <span className="badge soft tiny">Cliente: {l.customer_name}</span>}
                   </td>
                   <td><strong>{l.quantity}</strong></td>
