@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api";
+import PasswordStrength from "../components/PasswordStrength";
 import { Alert, FormField } from "../components/ui";
+import { isStrongPassword } from "../utils/userDisplay";
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -24,8 +26,8 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
+    if (!isStrongPassword(password)) {
+      setError("La contraseña no cumple todos los requisitos de seguridad.");
       return;
     }
 
@@ -91,17 +93,19 @@ export default function ResetPasswordPage() {
 
           {token && !success && (
             <>
-              <FormField label="Nueva contraseña" required hint="Mínimo 6 caracteres">
+              <FormField label="Nueva contraseña" required>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                   placeholder="••••••••"
                   autoComplete="new-password"
                 />
               </FormField>
+
+              {password && <PasswordStrength password={password} />}
 
               <FormField label="Confirmar nueva contraseña" required>
                 <input
@@ -109,7 +113,7 @@ export default function ResetPasswordPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                   placeholder="••••••••"
                   autoComplete="new-password"
                 />

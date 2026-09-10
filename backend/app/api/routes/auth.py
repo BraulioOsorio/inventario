@@ -7,6 +7,8 @@ from app.models.entities import User
 from app.schemas.dtos import (
     ForgotPasswordRequest,
     ForgotPasswordResponse,
+    PasswordChange,
+    ProfileUpdate,
     ResetPasswordRequest,
     SimpleMessageResponse,
     TokenOut,
@@ -19,9 +21,15 @@ from app.services.auth_service import AuthService
 router = APIRouter()
 
 
-@router.post("/register", response_model=TokenOut)
+@router.post("/request-access", response_model=SimpleMessageResponse, status_code=201)
+def request_access(payload: UserCreate, db: Session = Depends(get_db)):
+    return AuthService(db).request_access(payload)
+
+
+@router.post("/register", response_model=SimpleMessageResponse, status_code=201)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
-    return AuthService(db).register(payload)
+    """Alias de solicitud de acceso (sin auto-registro activo)."""
+    return AuthService(db).request_access(payload)
 
 
 @router.post("/login", response_model=TokenOut)
@@ -42,3 +50,21 @@ def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db))
 @router.get("/me", response_model=UserOut)
 def me(user: User = Depends(get_current_user)):
     return UserOut.model_validate(user)
+
+
+@router.put("/me", response_model=UserOut)
+def update_me(
+    payload: ProfileUpdate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return AuthService(db).update_profile(user, payload)
+
+
+@router.put("/me/password", response_model=SimpleMessageResponse)
+def change_my_password(
+    payload: PasswordChange,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return AuthService(db).change_password(user, payload)

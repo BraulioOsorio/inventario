@@ -1649,6 +1649,17 @@ textarea:focus {
   min-height: var(--input-h) !important;
 }
 
+.data-toolbar-actions .btn-primary,
+.data-toolbar-actions .btn-secondary,
+.data-toolbar-actions .btn-sm {
+  min-height: var(--input-h) !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  align-self: flex-end !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
 /* ─── Menú de acciones en tablas (toggler ⋮) ─── */
 .table-row-menu {
   position: relative;
@@ -1827,4 +1838,26 @@ textarea:focus {
 .pill-danger {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.password-strength {
+  background: rgba(255, 255, 255, 0.62) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(14px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  box-shadow: 0 4px 16px rgba(31, 38, 135, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+}
+
+.profile-card,
+.profile-facts div {
+  background: rgba(255, 255, 255, 0.62) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(18px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(180%) !important;
+}
+
+.alert.warning {
+  background: rgba(255, 248, 239, 0.9) !important;
+  border-color: rgba(245, 223, 192, 0.9) !important;
+  color: #b45309 !important;
 }

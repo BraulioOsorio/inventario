@@ -18,6 +18,8 @@ from app.schemas.dtos import (
     AdminUserCreate,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
+    PasswordChange,
+    ProfileUpdate,
     ResetPasswordRequest,
     SimpleMessageResponse,
     TokenOut,
@@ -32,23 +34,41 @@ class AuthService:
     def __init__(self, db: Session):
         self.users = UserRepository(db)
 
-    def register(self, payload: UserCreate) -> TokenOut:
-        if self.users.get_by_email(payload.email):
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El correo ya está registrado")
-        user = self.users.create(
+    def request_access(self, payload: UserCreate) -> SimpleMessageResponse:
+        existing = self.users.get_by_email(payload.email)
+        if existing:
+            if existing.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="El correo ya está registrado y activo",
+                )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ya existe una solicitud pendiente con este correo. Espera la activación del administrador.",
+            )
+        self.users.create(
             email=payload.email,
             full_name=payload.full_name,
             password_hash=hash_password(payload.password),
             is_admin=False,
+            is_active=False,
         )
-        return self._token_response(user)
+        return SimpleMessageResponse(
+            message=(
+                "Solicitud enviada correctamente. Un administrador revisará tu cuenta "
+                "y te activará para que puedas ingresar al sistema."
+            )
+        )
 
     def login(self, payload: UserLogin) -> TokenOut:
         user = self.users.get_by_email(payload.email)
         if user is None or not verify_password(payload.password, user.password_hash):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
         if not user.is_active:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Usuario inactivo")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Tu cuenta aún no ha sido activada. Contacta al administrador.",
+            )
         return self._token_response(user)
 
     def forgot_password(self, payload: ForgotPasswordRequest) -> ForgotPasswordResponse:
@@ -103,6 +123,24 @@ class AuthService:
             is_active=payload.is_active,
         )
         return UserOut.model_validate(user)
+
+    def update_profile(self, user: User, payload: ProfileUpdate) -> UserOut:
+        updated = self.users.update(user, full_name=payload.full_name.strip())
+        return UserOut.model_validate(updated)
+
+    def change_password(self, user: User, payload: PasswordChange) -> SimpleMessageResponse:
+        if not verify_password(payload.current_password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="La contraseña actual no es correcta",
+            )
+        if verify_password(payload.new_password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="La nueva contraseña debe ser diferente a la actual",
+            )
+        self.users.update(user, password_hash=hash_password(payload.new_password))
+        return SimpleMessageResponse(message="Contraseña actualizada correctamente.")
 
     def admin_update_user(self, user_id: UUID, payload: UserUpdateAdmin) -> UserOut:
         user = self.users.get_by_id(user_id)

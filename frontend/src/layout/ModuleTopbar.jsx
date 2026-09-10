@@ -13,6 +13,7 @@ const TITLES = {
   "/movimientos": { title: "Punto de venta", section: "Operaciones" },
   "/alertas": { title: "Centro de alertas", section: "Monitoreo" },
   "/usuarios": { title: "Usuarios del sistema", section: "Admin" },
+  "/perfil": { title: "Mi perfil", section: "Cuenta" },
 };
 
 export default function ModuleTopbar({ onMenuToggle }) {

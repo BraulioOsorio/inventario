@@ -212,7 +212,8 @@ export function EmptyState({ title, text, action }) {
 }
 
 export function Alert({ type = "error", children }) {
-  return <div className={`alert ${type === "error" ? "error" : "success"}`}>{children}</div>;
+  const cls = type === "error" ? "error" : type === "warning" ? "warning" : "success";
+  return <div className={`alert ${cls}`}>{children}</div>;
 }
 
 export function Modal({ open, title, subtitle, onClose, children, wide = false }) {

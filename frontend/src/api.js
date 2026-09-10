@@ -33,9 +33,14 @@ async function request(path, { method = "GET", body, token } = {}) {
 }
 
 export const api = {
+  requestAccess: (payload) => request("/api/auth/request-access", { method: "POST", body: payload }),
   register: (payload) => request("/api/auth/register", { method: "POST", body: payload }),
   login: (payload) => request("/api/auth/login", { method: "POST", body: payload }),
   me: (token) => request("/api/auth/me", { token }),
+  updateProfile: (token, payload) =>
+    request("/api/auth/me", { method: "PUT", body: payload, token }),
+  changePassword: (token, payload) =>
+    request("/api/auth/me/password", { method: "PUT", body: payload, token }),
   listProducts: (token, params = {}) => {
     const q = new URLSearchParams();
     if (params.context_type) q.set("context_type", params.context_type);

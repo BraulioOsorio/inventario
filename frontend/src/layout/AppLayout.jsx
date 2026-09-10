@@ -2,6 +2,7 @@ import { NavLink, Outlet, Navigate, Link } from "react-router-dom";
 import { useAuth } from "../auth";
 import ModuleTopbar from "./ModuleTopbar";
 import { SidebarProvider, useSidebar } from "./SidebarContext";
+import { avatarHue, getInitials } from "../utils/userDisplay";
 
 const NAV = [
   { to: "/", label: "Inicio", end: true, icon: "home", desc: "Resumen general" },
@@ -138,13 +139,20 @@ function Shell() {
         </nav>
 
         <div className="sidebar-foot glass-foot">
-          <div className="who">
-            <span className="avatar">{(user?.full_name || "?").slice(0, 1).toUpperCase()}</span>
+          <Link to="/perfil" className="who profile-link" onClick={close}>
+            <span
+              className="avatar avatar-gradient"
+              style={{
+                background: `linear-gradient(135deg, hsl(${avatarHue(user?.full_name)} 68% 52%), hsl(${(avatarHue(user?.full_name) + 40) % 360} 72% 58%))`,
+              }}
+            >
+              {getInitials(user?.full_name)}
+            </span>
             <div>
               <strong>{user?.full_name}</strong>
-              <small>{user?.is_admin ? "Administrador" : "Operador"}</small>
+              <small>{user?.is_admin ? "Administrador" : "Operador"} · Ver perfil</small>
             </div>
-          </div>
+          </Link>
           <button type="button" className="btn-side-exit" onClick={logout}>
             Cerrar sesión
           </button>

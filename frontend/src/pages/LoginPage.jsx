@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import PasswordStrength from "../components/PasswordStrength";
 import { Alert, FormField } from "../components/ui";
+import { isStrongPassword } from "../utils/userDisplay";
 
 const FEATURES = [
   "Catálogo y stock en tiempo real",
@@ -12,8 +14,8 @@ const FEATURES = [
 ];
 
 export default function LoginPage() {
-  const { token, login, register } = useAuth();
-  const [mode, setMode] = useState("login"); // login | register | forgot
+  const { token, login, requestAccess } = useAuth();
+  const [mode, setMode] = useState("login"); // login | request | forgot
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,8 +34,19 @@ export default function LoginPage() {
     try {
       if (mode === "login") {
         await login(email, password);
-      } else if (mode === "register") {
-        await register(fullName, email, password);
+      } else if (mode === "request") {
+        if (!isStrongPassword(password)) {
+          setError("La contraseña no cumple todos los requisitos de seguridad.");
+          return;
+        }
+        const res = await requestAccess(fullName, email, password);
+        setOkMessage(
+          res.message ||
+            "Solicitud enviada. Un administrador activará tu cuenta para que puedas ingresar."
+        );
+        setMode("login");
+        setPassword("");
+        setFullName("");
       } else if (mode === "forgot") {
         const res = await api.forgotPassword(email);
         if (res.email_sent) {
@@ -88,15 +101,15 @@ export default function LoginPage() {
           <h2>
             {mode === "login"
               ? "Bienvenido de nuevo"
-              : mode === "register"
-              ? "Crea tu cuenta"
+              : mode === "request"
+              ? "Solicitar acceso"
               : "Recuperar contraseña"}
           </h2>
           <p>
             {mode === "login"
               ? "Ingresa para continuar"
-              : mode === "register"
-              ? "Empieza a organizar tu inventario"
+              : mode === "request"
+              ? "Envía tu solicitud; un administrador activará tu cuenta"
               : "Te enviaremos las instrucciones a tu correo"}
           </p>
         </div>
@@ -116,14 +129,14 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
-              className={mode === "register" ? "active" : ""}
+              className={mode === "request" ? "active" : ""}
               onClick={() => {
-                setMode("register");
+                setMode("request");
                 setError("");
                 setOkMessage("");
               }}
             >
-              Registrarse
+              Solicitar acceso
             </button>
           </div>
         ) : (
@@ -143,7 +156,7 @@ export default function LoginPage() {
         )}
 
         <div className="form-card-body">
-          {mode === "register" && (
+          {mode === "request" && (
             <FormField label="Nombre completo" required>
               <input
                 value={fullName}
@@ -186,7 +199,7 @@ export default function LoginPage() {
                     ¿Olvidaste tu contraseña?
                   </button>
                 ) : (
-                  "Mínimo 6 caracteres"
+                  "Define una contraseña segura para cuando te activen"
                 )
               }
             >
@@ -195,12 +208,14 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 placeholder="••••••••"
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
               />
             </FormField>
           )}
+
+          {mode === "request" && password && <PasswordStrength password={password} />}
 
           {error && <Alert type="error">{error}</Alert>}
           {okMessage && <Alert type="success">{okMessage}</Alert>}
@@ -210,12 +225,18 @@ export default function LoginPage() {
               ? "Procesando…"
               : mode === "login"
               ? "Entrar al sistema →"
-              : mode === "register"
-              ? "Crear cuenta →"
+              : mode === "request"
+              ? "Enviar solicitud →"
               : "Enviar enlace al correo →"}
           </button>
 
-          {mode !== "forgot" && (
+          {mode === "request" && (
+            <p className="auth-demo-hint">
+              Tu cuenta quedará <strong>inactiva</strong> hasta que un administrador la apruebe.
+            </p>
+          )}
+
+          {mode === "login" && (
             <p className="auth-demo-hint">
               Demo: <code>pruebas@gmail.com</code> / <code>prueba123</code>
             </p>

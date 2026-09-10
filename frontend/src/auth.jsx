@@ -55,15 +55,14 @@ export function AuthProvider({ children }) {
         );
         return data;
       },
-      async register(full_name, email, password) {
-        const data = await api.register({ full_name, email, password });
-        setToken(data.access_token);
-        setUser(data.user);
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({ token: data.access_token, user: data.user })
-        );
-        return data;
+      async requestAccess(full_name, email, password) {
+        return api.requestAccess({ full_name, email, password });
+      },
+      updateUser(nextUser) {
+        setUser(nextUser);
+        if (token) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, user: nextUser }));
+        }
       },
       logout() {
         setToken(null);
