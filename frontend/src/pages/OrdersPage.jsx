@@ -8,6 +8,7 @@ import {
   FormActions,
   FormCard,
   FormField,
+  FormGlassSwitch,
   FormRow,
   KpiCard,
   Modal,
@@ -348,41 +349,33 @@ export default function OrdersPage() {
               />
             </FormField>
 
-            <div style={{ background: "rgba(99, 102, 241, 0.08)", padding: "1rem", borderRadius: "12px", border: "1px solid rgba(99, 102, 241, 0.2)", marginBottom: "1rem" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: "600", cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={form.is_monthly_recurring}
-                  onChange={(e) => setForm({ ...form, is_monthly_recurring: e.target.checked })}
-                />
-                <span>Pedido recurrente mensual (Notificar una semana antes de cada mes)</span>
-              </label>
-
+            <FormGlassSwitch
+              title="Pedido recurrente mensual"
+              description="La campanita te avisa 7 días antes del día programado cada mes"
+              checked={form.is_monthly_recurring}
+              onChange={(next) => setForm({ ...form, is_monthly_recurring: next })}
+            >
               {form.is_monthly_recurring ? (
-                <div style={{ marginTop: "0.75rem" }}>
-                  <FormField label="Día del mes programado (del 1 al 31)" hint="La campanita te avisará exactamente 7 días antes de este día cada mes">
-                    <input
-                      type="number"
-                      min="1"
-                      max="31"
-                      required
-                      value={form.monthly_day}
-                      onChange={(e) => setForm({ ...form, monthly_day: e.target.value })}
-                    />
-                  </FormField>
-                </div>
+                <FormField label="Día del mes (1 al 31)" hint="Aviso automático una semana antes de esta fecha, todos los meses">
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    required
+                    value={form.monthly_day}
+                    onChange={(e) => setForm({ ...form, monthly_day: e.target.value })}
+                  />
+                </FormField>
               ) : (
-                <div style={{ marginTop: "0.75rem" }}>
-                  <FormField label="Fecha esperada de entrega / realización" hint="La campanita te avisará 7 días antes de esta fecha">
-                    <input
-                      type="date"
-                      value={form.expected_date}
-                      onChange={(e) => setForm({ ...form, expected_date: e.target.value })}
-                    />
-                  </FormField>
-                </div>
+                <FormField label="Fecha esperada de entrega" hint="Aviso automático 7 días antes de esta fecha">
+                  <input
+                    type="date"
+                    value={form.expected_date}
+                    onChange={(e) => setForm({ ...form, expected_date: e.target.value })}
+                  />
+                </FormField>
               )}
-            </div>
+            </FormGlassSwitch>
 
             <FormRow cols={2}>
               <FormField label="Estado del pedido">

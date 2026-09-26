@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export const RowMenuIcons = {
   edit: (
@@ -38,35 +39,88 @@ export const RowMenuIcons = {
   ),
 };
 
+const ROW_MENU_WIDTH = 172;
+
 export function TableRowMenu({ items, label = "Opciones de fila" }) {
   const [open, setOpen] = useState(false);
-  const [dropUp, setDropUp] = useState(false);
-  const ref = useRef(null);
+  const [menuStyle, setMenuStyle] = useState(null);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
   const visible = items.filter((item) => !item.hidden);
 
-  useLayoutEffect(() => {
-    if (!open || !ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const estimatedMenuHeight = visible.length * 44 + 16;
+  const updatePosition = () => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const estimatedMenuHeight = visible.length * 44 + 20;
     const spaceBelow = window.innerHeight - rect.bottom;
-    setDropUp(spaceBelow < estimatedMenuHeight + 12);
+    const dropUp = spaceBelow < estimatedMenuHeight + 12;
+    let left = rect.right - ROW_MENU_WIDTH;
+    left = Math.max(8, Math.min(left, window.innerWidth - ROW_MENU_WIDTH - 8));
+    const top = dropUp ? rect.top - estimatedMenuHeight - 6 : rect.bottom + 6;
+    setMenuStyle({ top, left, dropUp });
+  };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePosition();
   }, [open, visible.length]);
 
   useEffect(() => {
     if (!open) return undefined;
     function handleClickOutside(event) {
-      if (ref.current && !ref.current.contains(event.target)) {
-        setOpen(false);
-      }
+      const inTrigger = triggerRef.current?.contains(event.target);
+      const inMenu = menuRef.current?.contains(event.target);
+      if (!inTrigger && !inMenu) setOpen(false);
+    }
+    function handleReposition() {
+      updatePosition();
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+    window.addEventListener("resize", handleReposition);
+    window.addEventListener("scroll", handleReposition, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, visible.length]);
 
   if (!visible.length) return null;
 
+  const menu =
+    open &&
+    menuStyle &&
+    createPortal(
+      <div
+        ref={menuRef}
+        className={`row-menu-popover row-menu-popover-portal ${menuStyle.dropUp ? "drop-up" : ""}`}
+        style={{ top: menuStyle.top, left: menuStyle.left, width: ROW_MENU_WIDTH }}
+        role="menu"
+      >
+        {visible.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="menuitem"
+            className={`row-menu-item ${item.danger ? "danger" : ""} ${item.primary ? "primary" : ""}`}
+            onClick={() => {
+              setOpen(false);
+              item.onClick?.();
+            }}
+            disabled={item.disabled}
+            title={item.title || item.label}
+          >
+            {item.icon && <span className="row-menu-icon">{item.icon}</span>}
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </div>,
+      document.body
+    );
+
   return (
-    <div className="table-row-menu" ref={ref}>
+    <div className="table-row-menu" ref={triggerRef}>
       <button
         type="button"
         className="row-menu-trigger"
@@ -81,27 +135,7 @@ export function TableRowMenu({ items, label = "Opciones de fila" }) {
           <circle cx="12" cy="19" r="1.75" />
         </svg>
       </button>
-      {open && (
-        <div className={`row-menu-popover ${dropUp ? "drop-up" : ""}`} role="menu">
-          {visible.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="menuitem"
-              className={`row-menu-item ${item.danger ? "danger" : ""} ${item.primary ? "primary" : ""}`}
-              onClick={() => {
-                setOpen(false);
-                item.onClick?.();
-              }}
-              disabled={item.disabled}
-              title={item.title || item.label}
-            >
-              {item.icon && <span className="row-menu-icon">{item.icon}</span>}
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {menu}
     </div>
   );
 }
@@ -153,6 +187,27 @@ export function FormSection({ title, children }) {
       {title && <legend>{title}</legend>}
       {children}
     </fieldset>
+  );
+}
+
+export function FormGlassSwitch({ title, description, checked, onChange, children }) {
+  return (
+    <FormSection title="Programación y avisos">
+      <label className="glass-switch">
+        <input
+          type="checkbox"
+          className="glass-switch-input"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        <span className="glass-switch-track" aria-hidden />
+        <span className="glass-switch-copy">
+          <strong>{title}</strong>
+          {description && <small>{description}</small>}
+        </span>
+      </label>
+      {children && <div className="glass-switch-body">{children}</div>}
+    </FormSection>
   );
 }
 

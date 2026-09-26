@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { useTheme } from "../theme";
 
 const TITLES = {
   "/": { title: "Panel de inicio", section: "Resumen" },
@@ -20,6 +21,7 @@ export default function ModuleTopbar({ onMenuToggle }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { token, user } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("all"); // all | stock | order | loan
   const [summary, setSummary] = useState({ total_unread: 0, items: [] });
@@ -93,7 +95,25 @@ export default function ModuleTopbar({ onMenuToggle }) {
       </div>
 
       <div className="module-topbar-right">
-        {/* Campanita interactiva */}
+        <button
+          type="button"
+          className="btn-ghost theme-toggle-btn"
+          onClick={toggleTheme}
+          aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
+          title={isDark ? "Modo claro" : "Modo oscuro"}
+        >
+          {isDark ? (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z" />
+            </svg>
+          )}
+        </button>
+
         <div className="topbar-bell-wrap" ref={popoverRef}>
           <button
             type="button"
