@@ -669,6 +669,9 @@ tbody tr:hover { background: #f8fafc; }
   align-items: center;
 }
 .donut { width: 140px; height: 140px; }
+.donut-track { stroke: #e8eef5; }
+.donut-fill { stroke: #2f6fed; }
+.donut-label { fill: #1d2a36; }
 .donut-wrap p { margin: 0.2rem 0; }
 
 /* ─── Responsive ─── */
