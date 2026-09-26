@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { useBusinessDay } from "../businessDay";
@@ -28,6 +28,7 @@ export default function MovementsPage() {
   const { token } = useAuth();
   const { canOperate, refresh: refreshBusinessDay } = useBusinessDay();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [movements, setMovements] = useState([]);
@@ -57,6 +58,13 @@ export default function MovementsPage() {
   useEffect(() => {
     load().catch((e) => setError(e.message));
   }, [token]);
+
+  useEffect(() => {
+    const modeParam = searchParams.get("mode");
+    if (modeParam && MODES.some((m) => m.id === modeParam)) {
+      setMode(modeParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const productId = searchParams.get("product") || "";
@@ -246,7 +254,7 @@ export default function MovementsPage() {
       {ok && <Alert type="success">{ok}</Alert>}
       {!canOperate && (
         <Alert type="warning">
-          El día operativo de hoy no está abierto. Puedes navegar el módulo, pero no podrás vender ni mover stock hasta abrir el día (banner superior).
+          El día operativo de hoy no está abierto. Abre el día desde el menú Operaciones o cuando aparezca el aviso al entrar.
         </Alert>
       )}
 
@@ -256,7 +264,14 @@ export default function MovementsPage() {
             key={m.id}
             type="button"
             className={`filter-chip pos-mode-chip ${mode === m.id ? "active" : ""}`}
-            onClick={() => setMode(m.id)}
+            onClick={() => {
+              setMode(m.id);
+              const q = new URLSearchParams(searchParams);
+              if (m.id === "pos") q.delete("mode");
+              else q.set("mode", m.id);
+              const qs = q.toString();
+              navigate(qs ? `/movimientos?${qs}` : "/movimientos", { replace: true });
+            }}
           >
             <strong>{m.label}</strong>
             <small>{m.hint}</small>

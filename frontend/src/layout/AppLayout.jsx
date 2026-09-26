@@ -3,12 +3,11 @@ import { useAuth } from "../auth";
 import ModuleTopbar from "./ModuleTopbar";
 import { SidebarProvider, useSidebar } from "./SidebarContext";
 import UserAvatar from "../components/UserAvatar";
-import DayOperationsBanner from "../components/DayOperationsBanner";
+import DayOperationsModal from "../components/DayOperationsModal";
+import NavOperacionesMenu from "../components/NavOperacionesMenu";
 import { BusinessDayProvider } from "../businessDay";
 
 const NAV = [
-  { to: "/", label: "Inicio", end: true, icon: "home", desc: "Resumen general" },
-  { to: "/movimientos", label: "Punto de venta", icon: "pos", desc: "Cobrar y vender" },
   { to: "/productos", label: "Productos", icon: "box", desc: "Catálogo completo" },
   { to: "/pedidos", label: "Pedidos", icon: "orders", desc: "Compras a proveedores" },
   { to: "/prestamos", label: "Préstamos", icon: "loans", desc: "Custodia y devolución" },
@@ -110,6 +109,21 @@ function Shell() {
 
         <nav className="erp-nav">
           <p className="nav-label">Navegación</p>
+          <NavLink
+            to="/"
+            end
+            onClick={close}
+            className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}
+          >
+            <NavIcon name="home" />
+            <span className="nav-text">
+              <strong>Inicio</strong>
+              <small>Resumen general</small>
+            </span>
+          </NavLink>
+
+          <NavOperacionesMenu />
+
           {NAV.map((item) => (
             <NavLink
               key={item.to}
@@ -156,7 +170,7 @@ function Shell() {
 
       <div className="erp-main">
         <ModuleTopbar onMenuToggle={toggle} />
-        <DayOperationsBanner />
+        <DayOperationsModal />
         <Outlet />
       </div>
     </div>
