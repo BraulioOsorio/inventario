@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { useBusinessDay } from "../businessDay";
 import { Alert, EmptyState, FormActions, FormCard, FormField, FormRow, PageHeader, Panel } from "../components/ui";
 import { movementTypeLabel } from "../utils/labels";
 
@@ -11,6 +12,7 @@ const fmt = (n) =>
 const MODES = [
   { id: "pos", label: "Punto de venta", hint: "Toca productos y cobra" },
   { id: "in", label: "Entrada", hint: "Ingresar stock" },
+  { id: "adjust", label: "Ajuste inventario", hint: "Salida sin cobro" },
   { id: "history", label: "Historial", hint: "Ver movimientos" },
 ];
 
@@ -24,6 +26,7 @@ function productMap(products) {
 
 export default function MovementsPage() {
   const { token } = useAuth();
+  const { canOperate, refresh: refreshBusinessDay } = useBusinessDay();
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
@@ -33,6 +36,7 @@ export default function MovementsPage() {
   const [cart, setCart] = useState([]);
   const [received, setReceived] = useState("");
   const [inForm, setInForm] = useState({ product_id: "", quantity: 1, note: "" });
+  const [adjustForm, setAdjustForm] = useState({ product_id: "", quantity: 1, note: "" });
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [busy, setBusy] = useState(false);
@@ -149,8 +153,16 @@ export default function MovementsPage() {
     setReceived(String(amount));
   }
 
+  function ensureDayOpen() {
+    if (!canOperate) {
+      setError("Debes tener el día operativo de hoy abierto para registrar movimientos.");
+      return false;
+    }
+    return true;
+  }
+
   async function checkout() {
-    if (!canPay) return;
+    if (!canPay || !ensureDayOpen()) return;
     setBusy(true);
     setError("");
     setOk("");
@@ -166,6 +178,7 @@ export default function MovementsPage() {
       setOk(`Venta registrada · Total ${fmt(subtotal)} · Cambio ${fmt(change)}`);
       clearCart();
       await load();
+      await refreshBusinessDay();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -175,6 +188,7 @@ export default function MovementsPage() {
 
   async function submitEntry(e) {
     e.preventDefault();
+    if (!ensureDayOpen()) return;
     setBusy(true);
     setError("");
     setOk("");
@@ -187,6 +201,32 @@ export default function MovementsPage() {
       setInForm({ product_id: "", quantity: 1, note: "" });
       setOk("Entrada registrada correctamente.");
       await load();
+      await refreshBusinessDay();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitAdjust(e) {
+    e.preventDefault();
+    if (!ensureDayOpen()) return;
+    setBusy(true);
+    setError("");
+    setOk("");
+    try {
+      const note = adjustForm.note.trim() || "Ajuste de inventario (sin cobro)";
+      await api.createMovement(token, {
+        product_id: adjustForm.product_id,
+        movement_type: "out",
+        quantity: Number(adjustForm.quantity),
+        note: `Ajuste inventario · ${note}`,
+      });
+      setAdjustForm({ product_id: "", quantity: 1, note: "" });
+      setOk("Ajuste registrado: salida de stock sin cobro.");
+      await load();
+      await refreshBusinessDay();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -204,6 +244,11 @@ export default function MovementsPage() {
 
       {error && <Alert type="error">{error}</Alert>}
       {ok && <Alert type="success">{ok}</Alert>}
+      {!canOperate && (
+        <Alert type="warning">
+          El día operativo de hoy no está abierto. Puedes navegar el módulo, pero no podrás vender ni mover stock hasta abrir el día (banner superior).
+        </Alert>
+      )}
 
       <div className="pos-mode-tabs glass-tabs">
         {MODES.map((m) => (
@@ -319,7 +364,7 @@ export default function MovementsPage() {
               <button
                 type="button"
                 className="btn-primary btn-block pos-pay-btn"
-                disabled={!canPay || busy}
+                disabled={!canPay || busy || !canOperate}
                 onClick={checkout}
               >
                 {busy ? "Procesando…" : `Cobrar ${fmt(subtotal)}`}
@@ -327,6 +372,57 @@ export default function MovementsPage() {
             </div>
           </aside>
         </div>
+      )}
+
+      {mode === "adjust" && (
+        <section className="glass-panel pos-entry-panel">
+          <h2>Ajuste de inventario</h2>
+          <p className="sub">
+            Registra una salida de stock sin cobro (merma, rotura, corrección). No genera venta en caja.
+          </p>
+          <FormCard onSubmit={submitAdjust} bare className="glass-form">
+            <div className="form-card-body">
+              <FormField label="Producto" required>
+                <select
+                  required
+                  value={adjustForm.product_id}
+                  onChange={(e) => setAdjustForm({ ...adjustForm, product_id: e.target.value })}
+                >
+                  <option value="">Selecciona un producto…</option>
+                  {allProducts.filter((p) => p.is_active).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} — stock: {p.quantity}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormRow cols={2}>
+                <FormField label="Cantidad a retirar" required>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={adjustForm.quantity}
+                    onChange={(e) => setAdjustForm({ ...adjustForm, quantity: e.target.value })}
+                  />
+                </FormField>
+                <FormField label="Motivo del ajuste" required>
+                  <input
+                    required
+                    value={adjustForm.note}
+                    onChange={(e) => setAdjustForm({ ...adjustForm, note: e.target.value })}
+                    placeholder="Ej. Producto dañado"
+                  />
+                </FormField>
+              </FormRow>
+            </div>
+            <FormActions>
+              <button type="submit" className="btn-primary" disabled={busy || !canOperate}>
+                {busy ? "Guardando…" : "Registrar ajuste (salida)"}
+              </button>
+            </FormActions>
+          </FormCard>
+        </section>
       )}
 
       {mode === "in" && (
@@ -369,7 +465,7 @@ export default function MovementsPage() {
               </FormRow>
             </div>
             <FormActions>
-              <button type="submit" className="btn-primary" disabled={busy}>
+              <button type="submit" className="btn-primary" disabled={busy || !canOperate}>
                 {busy ? "Guardando…" : "Registrar entrada"}
               </button>
             </FormActions>

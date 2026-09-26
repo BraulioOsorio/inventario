@@ -3,6 +3,8 @@ import { useAuth } from "../auth";
 import ModuleTopbar from "./ModuleTopbar";
 import { SidebarProvider, useSidebar } from "./SidebarContext";
 import UserAvatar from "../components/UserAvatar";
+import DayOperationsBanner from "../components/DayOperationsBanner";
+import { BusinessDayProvider } from "../businessDay";
 
 const NAV = [
   { to: "/", label: "Inicio", end: true, icon: "home", desc: "Resumen general" },
@@ -154,6 +156,7 @@ function Shell() {
 
       <div className="erp-main">
         <ModuleTopbar onMenuToggle={toggle} />
+        <DayOperationsBanner />
         <Outlet />
       </div>
     </div>
@@ -162,9 +165,11 @@ function Shell() {
 
 export default function AppLayout() {
   return (
-    <SidebarProvider>
-      <Shell />
-    </SidebarProvider>
+    <BusinessDayProvider>
+      <SidebarProvider>
+        <Shell />
+      </SidebarProvider>
+    </BusinessDayProvider>
   );
 }
 

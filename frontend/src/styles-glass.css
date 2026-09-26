@@ -1796,7 +1796,7 @@ textarea:focus {
   box-shadow: 0 4px 14px rgba(99, 102, 241, 0.15) !important;
 }
 
-.row-menu-popover {
+.row-menu-popover:not(.row-menu-popover-portal) {
   position: absolute !important;
   top: calc(100% + 6px) !important;
   bottom: auto !important;
@@ -1815,7 +1815,7 @@ textarea:focus {
   animation: dropDown 0.15s ease-out !important;
 }
 
-.row-menu-popover.drop-up {
+.row-menu-popover.drop-up:not(.row-menu-popover-portal) {
   top: auto !important;
   bottom: calc(100% + 6px) !important;
   animation: dropUp 0.15s ease-out !important;
@@ -1823,11 +1823,22 @@ textarea:focus {
 
 .row-menu-popover-portal {
   position: fixed !important;
-  top: auto !important;
-  right: auto !important;
-  bottom: auto !important;
+  top: var(--row-menu-top, auto);
+  left: var(--row-menu-left, auto);
   z-index: 5000 !important;
+  pointer-events: auto !important;
   margin: 0 !important;
+  min-width: 168px !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(99, 102, 241, 0.1) !important;
+  padding: 0.35rem !important;
+  display: grid !important;
+  gap: 0.15rem !important;
+  animation: dropDown 0.15s ease-out !important;
 }
 
 .row-menu-popover-portal.drop-up {

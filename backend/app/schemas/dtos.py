@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -179,6 +179,27 @@ class ProductOut(BaseModel):
     has_movements: bool = False
 
     model_config = {"from_attributes": True}
+
+
+class BusinessDayOpenRequest(BaseModel):
+    client_date: str = Field(min_length=10, max_length=10)
+
+
+class BusinessDayOut(BaseModel):
+    id: UUID
+    business_date: date
+    opened_at: datetime
+    closed_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class BusinessDayStatusOut(BaseModel):
+    client_date: date
+    open_day: BusinessDayOut | None = None
+    is_current_day: bool = False
+    can_operate: bool = False
+    suggestion: str | None = None  # open | rollover
 
 
 class MovementCreate(BaseModel):

@@ -1,8 +1,17 @@
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-async function request(path, { method = "GET", body, token } = {}) {
+export function clientLocalDate() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+async function request(path, { method = "GET", body, token, clientDate } = {}) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
+  if (clientDate) headers["X-Client-Date"] = clientDate;
 
   const res = await fetch(`${API_URL}${path}`, {
     method,
@@ -61,7 +70,32 @@ export const api = {
     request("/api/categories", { method: "POST", body: payload, token }),
   listMovements: (token) => request("/api/movements", { token }),
   createMovement: (token, payload) =>
-    request("/api/movements", { method: "POST", body: payload, token }),
+    request("/api/movements", {
+      method: "POST",
+      body: payload,
+      token,
+      clientDate: clientLocalDate(),
+    }),
+  businessDayStatus: (token) =>
+    request("/api/business-days/status", { token, clientDate: clientLocalDate() }),
+  openBusinessDay: (token) =>
+    request("/api/business-days/open", {
+      method: "POST",
+      body: { client_date: clientLocalDate() },
+      token,
+    }),
+  closeBusinessDay: (token) =>
+    request("/api/business-days/close", {
+      method: "POST",
+      token,
+      clientDate: clientLocalDate(),
+    }),
+  rolloverBusinessDay: (token) =>
+    request("/api/business-days/rollover", {
+      method: "POST",
+      body: { client_date: clientLocalDate() },
+      token,
+    }),
   listUsers: (token) => request("/api/users", { token }),
   createUser: (token, payload) =>
     request("/api/users", { method: "POST", body: payload, token }),

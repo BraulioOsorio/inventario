@@ -1,8 +1,9 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
@@ -33,6 +34,7 @@ class User(Base):
     products: Mapped[list["Product"]] = relationship(back_populates="owner")
     categories: Mapped[list["Category"]] = relationship(back_populates="owner")
     movements: Mapped[list["StockMovement"]] = relationship(back_populates="owner")
+    business_days: Mapped[list["BusinessDay"]] = relationship(back_populates="owner")
     customers: Mapped[list["Customer"]] = relationship(back_populates="owner")
     orders: Mapped[list["SupplierOrder"]] = relationship(back_populates="owner")
     loans: Mapped[list["Loan"]] = relationship(back_populates="owner")
@@ -78,6 +80,18 @@ class Product(Base):
     category: Mapped["Category | None"] = relationship(back_populates="products")
     movements: Mapped[list["StockMovement"]] = relationship(back_populates="product")
     loans: Mapped[list["Loan"]] = relationship(back_populates="product")
+
+
+class BusinessDay(Base):
+    __tablename__ = "business_days"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    business_date: Mapped[date] = mapped_column(Date, nullable=False)
+    opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    owner: Mapped["User"] = relationship(back_populates="business_days")
 
 
 class StockMovement(Base):

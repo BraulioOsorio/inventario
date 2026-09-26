@@ -1059,6 +1059,24 @@ tbody tr:hover { background: #f8fafc; }
   font-size: 0.82rem;
   border: 2px solid rgba(255, 255, 255, 0.85);
 }
+
+.day-ops-banner {
+  margin: 0 clamp(1rem, 3vw, 1.75rem);
+  margin-top: 0.65rem;
+}
+
+.day-ops-copy p {
+  margin: 0.35rem 0 0.65rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.day-ops-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .profile-layout {
   display: grid;
   grid-template-columns: minmax(260px, 320px) 1fr;

@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.routes import (
     auth,
+    business_days,
     categories,
     customers,
     health,
@@ -39,6 +40,7 @@ app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(categories.router, prefix="/api/categories", tags=["Categories"])
 app.include_router(products.router, prefix="/api/products", tags=["Products"])
 app.include_router(movements.router, prefix="/api/movements", tags=["Movements"])
+app.include_router(business_days.router, prefix="/api/business-days", tags=["BusinessDays"])
 app.include_router(customers.router, prefix="/api/customers", tags=["Customers"])
 app.include_router(orders.router, prefix="/api/orders", tags=["Orders"])
 app.include_router(loans.router, prefix="/api/loans", tags=["Loans"])

@@ -28,6 +28,19 @@ def migrate_schema() -> None:
                 """
             )
         )
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS business_days (
+                    id UUID PRIMARY KEY,
+                    owner_id UUID NOT NULL REFERENCES users(id),
+                    business_date DATE NOT NULL,
+                    opened_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    closed_at TIMESTAMPTZ
+                )
+                """
+            )
+        )
         conn.execute(text("ALTER TABLE products DROP CONSTRAINT IF EXISTS uq_product_owner_sku"))
 
 

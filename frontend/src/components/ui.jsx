@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { flushSync } from "react-dom";
 
 export const RowMenuIcons = {
   edit: (
@@ -48,8 +49,8 @@ export function TableRowMenu({ items, label = "Opciones de fila" }) {
   const menuRef = useRef(null);
   const visible = items.filter((item) => !item.hidden);
 
-  const updatePosition = () => {
-    if (!triggerRef.current) return;
+  const computePosition = useCallback(() => {
+    if (!triggerRef.current) return null;
     const rect = triggerRef.current.getBoundingClientRect();
     const estimatedMenuHeight = visible.length * 44 + 20;
     const spaceBelow = window.innerHeight - rect.bottom;
@@ -57,7 +58,12 @@ export function TableRowMenu({ items, label = "Opciones de fila" }) {
     let left = rect.right - ROW_MENU_WIDTH;
     left = Math.max(8, Math.min(left, window.innerWidth - ROW_MENU_WIDTH - 8));
     const top = dropUp ? rect.top - estimatedMenuHeight - 6 : rect.bottom + 6;
-    setMenuStyle({ top, left, dropUp });
+    return { top: Math.round(top), left: Math.round(left), dropUp };
+  }, [visible.length]);
+
+  const updatePosition = () => {
+    const next = computePosition();
+    if (next) setMenuStyle(next);
   };
 
   useLayoutEffect(() => {
@@ -95,7 +101,13 @@ export function TableRowMenu({ items, label = "Opciones de fila" }) {
       <div
         ref={menuRef}
         className={`row-menu-popover row-menu-popover-portal ${menuStyle.dropUp ? "drop-up" : ""}`}
-        style={{ top: menuStyle.top, left: menuStyle.left, width: ROW_MENU_WIDTH }}
+        style={{
+          top: menuStyle.top,
+          left: menuStyle.left,
+          width: ROW_MENU_WIDTH,
+          "--row-menu-top": `${menuStyle.top}px`,
+          "--row-menu-left": `${menuStyle.left}px`,
+        }}
         role="menu"
       >
         {visible.map((item) => (
@@ -124,7 +136,19 @@ export function TableRowMenu({ items, label = "Opciones de fila" }) {
       <button
         type="button"
         className="row-menu-trigger"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          if (open) {
+            setOpen(false);
+            setMenuStyle(null);
+            return;
+          }
+          const next = computePosition();
+          if (!next) return;
+          flushSync(() => {
+            setMenuStyle(next);
+            setOpen(true);
+          });
+        }}
         aria-label={label}
         aria-expanded={open}
         aria-haspopup="menu"
