@@ -1069,18 +1069,63 @@ tbody tr:hover { background: #f8fafc; }
   text-align: center;
   padding: 1.5rem 1.25rem;
 }
-.profile-avatar {
+.profile-avatar-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+}
+
+.profile-avatar-input {
+  display: none;
+}
+
+.profile-avatar-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.user-avatar-img,
+.user-avatar-sm,
+.user-avatar-md,
+.user-avatar-xl,
+.profile-avatar-main {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.user-avatar-sm {
+  width: 36px;
+  height: 36px;
+  font-size: 0.82rem;
+}
+
+.user-avatar-md {
+  width: 48px;
+  height: 48px;
+  font-size: 1rem;
+}
+
+.user-avatar-xl,
+.profile-avatar-main {
   width: 96px;
   height: 96px;
-  border-radius: 50%;
-  margin: 0 auto 1rem;
-  display: grid;
-  place-items: center;
-  color: #fff;
   font-size: 1.75rem;
   font-weight: 800;
   border: 3px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 8px 24px rgba(31, 38, 135, 0.12);
+}
+
+.user-avatar-img.user-avatar-sm {
+  border: 2px solid rgba(255, 255, 255, 0.85);
+}
+
+.user-avatar-img.user-avatar-xl {
+  display: block;
+  margin: 0 auto;
 }
 .profile-card h2 { margin: 0 0 0.25rem; font-size: 1.2rem; }
 .profile-email { margin: 0 0 0.85rem; color: var(--muted); font-size: 0.9rem; }

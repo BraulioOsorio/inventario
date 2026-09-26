@@ -39,6 +39,8 @@ export const api = {
   me: (token) => request("/api/auth/me", { token }),
   updateProfile: (token, payload) =>
     request("/api/auth/me", { method: "PUT", body: payload, token }),
+  updateAvatar: (token, payload) =>
+    request("/api/auth/me/avatar", { method: "PUT", body: payload, token }),
   changePassword: (token, payload) =>
     request("/api/auth/me/password", { method: "PUT", body: payload, token }),
   listProducts: (token, params = {}) => {

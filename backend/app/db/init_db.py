@@ -20,6 +20,14 @@ def migrate_schema() -> None:
                 """
             )
         )
+        conn.execute(
+            text(
+                """
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS avatar_base64 TEXT
+                """
+            )
+        )
         conn.execute(text("ALTER TABLE products DROP CONSTRAINT IF EXISTS uq_product_owner_sku"))
 
 

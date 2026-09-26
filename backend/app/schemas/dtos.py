@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
+from app.core.avatar_policy import normalize_avatar_base64
 from app.core.password_policy import assert_strong_password
 
 
@@ -50,6 +51,15 @@ class ProfileUpdate(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
 
 
+class AvatarUpdate(BaseModel):
+    avatar_base64: str | None = None
+
+    @field_validator("avatar_base64")
+    @classmethod
+    def validate_avatar(cls, value: str | None) -> str | None:
+        return normalize_avatar_base64(value)
+
+
 class PasswordChange(BaseModel):
     current_password: str = Field(min_length=1, max_length=128)
     new_password: str = Field(min_length=8, max_length=128)
@@ -72,6 +82,7 @@ class UserOut(BaseModel):
     full_name: str
     is_admin: bool = False
     is_active: bool = True
+    avatar_base64: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

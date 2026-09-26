@@ -2,7 +2,7 @@ import { NavLink, Outlet, Navigate, Link } from "react-router-dom";
 import { useAuth } from "../auth";
 import ModuleTopbar from "./ModuleTopbar";
 import { SidebarProvider, useSidebar } from "./SidebarContext";
-import { avatarHue, getInitials } from "../utils/userDisplay";
+import UserAvatar from "../components/UserAvatar";
 
 const NAV = [
   { to: "/", label: "Inicio", end: true, icon: "home", desc: "Resumen general" },
@@ -140,14 +140,7 @@ function Shell() {
 
         <div className="sidebar-foot glass-foot">
           <Link to="/perfil" className="who profile-link" onClick={close}>
-            <span
-              className="avatar avatar-gradient"
-              style={{
-                background: `linear-gradient(135deg, hsl(${avatarHue(user?.full_name)} 68% 52%), hsl(${(avatarHue(user?.full_name) + 40) % 360} 72% 58%))`,
-              }}
-            >
-              {getInitials(user?.full_name)}
-            </span>
+            <UserAvatar user={user} size="sm" />
             <div>
               <strong>{user?.full_name}</strong>
               <small>{user?.is_admin ? "Administrador" : "Operador"} · Ver perfil</small>

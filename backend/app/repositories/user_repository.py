@@ -43,6 +43,8 @@ class UserRepository:
         for key, value in fields.items():
             if value is not None:
                 setattr(user, key, value)
+            elif key == "avatar_base64":
+                setattr(user, key, None)
         self.db.commit()
         self.db.refresh(user)
         return user

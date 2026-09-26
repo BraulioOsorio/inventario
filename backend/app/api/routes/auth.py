@@ -7,6 +7,7 @@ from app.models.entities import User
 from app.schemas.dtos import (
     ForgotPasswordRequest,
     ForgotPasswordResponse,
+    AvatarUpdate,
     PasswordChange,
     ProfileUpdate,
     ResetPasswordRequest,
@@ -59,6 +60,15 @@ def update_me(
     db: Session = Depends(get_db),
 ):
     return AuthService(db).update_profile(user, payload)
+
+
+@router.put("/me/avatar", response_model=UserOut)
+def update_my_avatar(
+    payload: AvatarUpdate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return AuthService(db).update_avatar(user, payload)
 
 
 @router.put("/me/password", response_model=SimpleMessageResponse)

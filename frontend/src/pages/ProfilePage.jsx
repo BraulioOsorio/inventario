@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import PasswordStrength from "../components/PasswordStrength";
+import UserAvatar from "../components/UserAvatar";
 import { Alert, FormActions, FormCard, FormField, PageHeader } from "../components/ui";
-import { avatarHue, getInitials, isStrongPassword } from "../utils/userDisplay";
+import { isStrongPassword, readImageAsDataUrl } from "../utils/userDisplay";
 
 function formatDate(value) {
   if (!value) return "—";
@@ -19,17 +20,17 @@ function formatDate(value) {
 
 export default function ProfilePage() {
   const { token, user, updateUser } = useAuth();
+  const fileRef = useRef(null);
   const [fullName, setFullName] = useState(user?.full_name || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [profileMsg, setProfileMsg] = useState({ type: "", text: "" });
+  const [avatarMsg, setAvatarMsg] = useState({ type: "", text: "" });
   const [passwordMsg, setPasswordMsg] = useState({ type: "", text: "" });
   const [busyProfile, setBusyProfile] = useState(false);
+  const [busyAvatar, setBusyAvatar] = useState(false);
   const [busyPassword, setBusyPassword] = useState(false);
-
-  const hue = avatarHue(user?.full_name);
-  const initials = getInitials(user?.full_name);
 
   useEffect(() => {
     setFullName(user?.full_name || "");
@@ -47,6 +48,39 @@ export default function ProfilePage() {
       setProfileMsg({ type: "error", text: err.message });
     } finally {
       setBusyProfile(false);
+    }
+  }
+
+  async function onPickAvatar(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setAvatarMsg({ type: "", text: "" });
+    setBusyAvatar(true);
+    try {
+      const dataUrl = await readImageAsDataUrl(file);
+      const updated = await api.updateAvatar(token, { avatar_base64: dataUrl });
+      updateUser(updated);
+      setAvatarMsg({ type: "success", text: "Foto de perfil actualizada." });
+    } catch (err) {
+      setAvatarMsg({ type: "error", text: err.message });
+    } finally {
+      setBusyAvatar(false);
+    }
+  }
+
+  async function onRemoveAvatar() {
+    setAvatarMsg({ type: "", text: "" });
+    setBusyAvatar(true);
+    try {
+      const updated = await api.updateAvatar(token, { avatar_base64: null });
+      updateUser(updated);
+      setAvatarMsg({ type: "success", text: "Se restauraron las iniciales como avatar." });
+    } catch (err) {
+      setAvatarMsg({ type: "error", text: err.message });
+    } finally {
+      setBusyAvatar(false);
     }
   }
 
@@ -90,15 +124,43 @@ export default function ProfilePage() {
 
       <div className="profile-layout">
         <section className="panel profile-card glass-panel">
-          <div
-            className="profile-avatar"
-            style={{
-              background: `linear-gradient(135deg, hsl(${hue} 68% 52%), hsl(${(hue + 40) % 360} 72% 58%))`,
-            }}
-            aria-hidden
-          >
-            {initials}
+          <div className="profile-avatar-wrap">
+            <UserAvatar user={user} size="xl" className="profile-avatar-main" />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="profile-avatar-input"
+              onChange={onPickAvatar}
+              disabled={busyAvatar}
+            />
           </div>
+
+          <div className="profile-avatar-actions">
+            <button
+              type="button"
+              className="btn-secondary btn-sm"
+              onClick={() => fileRef.current?.click()}
+              disabled={busyAvatar}
+            >
+              {busyAvatar ? "Guardando…" : "Subir foto"}
+            </button>
+            {user?.avatar_base64 && (
+              <button
+                type="button"
+                className="btn-danger-ghost btn-sm"
+                onClick={onRemoveAvatar}
+                disabled={busyAvatar}
+              >
+                Quitar foto
+              </button>
+            )}
+          </div>
+
+          {avatarMsg.text && (
+            <Alert type={avatarMsg.type}>{avatarMsg.text}</Alert>
+          )}
+
           <h2>{user?.full_name}</h2>
           <p className="profile-email">{user?.email}</p>
           <div className="profile-meta">
@@ -118,7 +180,7 @@ export default function ProfilePage() {
             </div>
           </dl>
           <p className="profile-hint">
-            El avatar muestra tus iniciales con un color único. En una versión futura podrás subir una foto de perfil.
+            JPG, PNG, WEBP o GIF hasta 500 KB. Si no subes foto, se muestran tus iniciales con color único.
           </p>
         </section>
 

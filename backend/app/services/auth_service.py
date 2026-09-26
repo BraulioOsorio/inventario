@@ -19,6 +19,7 @@ from app.schemas.dtos import (
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     PasswordChange,
+    AvatarUpdate,
     ProfileUpdate,
     ResetPasswordRequest,
     SimpleMessageResponse,
@@ -126,6 +127,10 @@ class AuthService:
 
     def update_profile(self, user: User, payload: ProfileUpdate) -> UserOut:
         updated = self.users.update(user, full_name=payload.full_name.strip())
+        return UserOut.model_validate(updated)
+
+    def update_avatar(self, user: User, payload: AvatarUpdate) -> UserOut:
+        updated = self.users.update(user, avatar_base64=payload.avatar_base64)
         return UserOut.model_validate(updated)
 
     def change_password(self, user: User, payload: PasswordChange) -> SimpleMessageResponse:
