@@ -1352,6 +1352,38 @@ textarea:focus {
   background: rgba(255, 255, 255, 0.3);
 }
 
+.pos-sale-note {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.pos-sale-note-input {
+  width: 100%;
+  min-height: 4.5rem;
+  resize: vertical;
+  border: 1px solid var(--input-border, rgba(51, 65, 85, 0.24));
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  font-size: 0.88rem;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ink);
+}
+
+.pos-sale-note-input:hover {
+  border-color: var(--input-border-hover, rgba(51, 65, 85, 0.38));
+}
+
+.pos-sale-note-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+}
+
 .pos-summary {
   display: grid;
   gap: 0.55rem;

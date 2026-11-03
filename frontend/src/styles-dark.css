@@ -544,6 +544,12 @@
   border-color: rgba(148, 163, 184, 0.12) !important;
 }
 
+[data-theme="dark"] .pos-sale-note-input {
+  background: rgba(15, 23, 42, 0.55) !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  color: #f1f5f9 !important;
+}
+
 [data-theme="dark"] .pos-cart-info strong {
   color: #f8fafc !important;
 }

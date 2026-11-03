@@ -38,6 +38,7 @@ export default function MovementsPage() {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState([]);
   const [received, setReceived] = useState("");
+  const [saleNote, setSaleNote] = useState("");
   const [inForm, setInForm] = useState({ product_id: "", quantity: 1, note: "" });
   const [adjustForm, setAdjustForm] = useState({ product_id: "", quantity: 1, note: "" });
   const [error, setError] = useState("");
@@ -157,6 +158,7 @@ export default function MovementsPage() {
   function clearCart() {
     setCart([]);
     setReceived("");
+    setSaleNote("");
     setError("");
   }
 
@@ -178,12 +180,16 @@ export default function MovementsPage() {
     setError("");
     setOk("");
     try {
+      const obs = saleNote.trim();
       for (const line of cart) {
+        const lineTotal = fmt(line.unit_price * line.quantity);
+        let note = `Venta POS · ${lineTotal}`;
+        if (obs) note += ` · Obs: ${obs}`;
         await api.createMovement(token, {
           product_id: line.product_id,
           movement_type: "out",
           quantity: line.quantity,
-          note: `Venta POS · ${fmt(line.unit_price * line.quantity)}`,
+          note,
         });
       }
       setOk(`Venta registrada · Total ${fmt(subtotal)} · Cambio ${fmt(change)}`);
@@ -345,6 +351,21 @@ export default function MovementsPage() {
                 <li className="pos-cart-empty">Toca un producto para agregarlo aquí</li>
               )}
             </ul>
+
+            <div className="pos-sale-note">
+              <label className="pos-received-label" htmlFor="pos-sale-note">
+                Observación de la venta
+              </label>
+              <textarea
+                id="pos-sale-note"
+                className="pos-sale-note-input"
+                rows={2}
+                maxLength={500}
+                placeholder="Opcional: cliente, entrega, detalle del pedido…"
+                value={saleNote}
+                onChange={(e) => setSaleNote(e.target.value)}
+              />
+            </div>
 
             <div className="pos-summary">
               <div className="pos-summary-row">
