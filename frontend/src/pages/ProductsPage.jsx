@@ -17,6 +17,9 @@ import {
   TableRowMenu,
 } from "../components/ui";
 import { contextTypeLabel, formatMoney } from "../utils/labels";
+import ProductImage from "../components/ProductImage";
+import { syncProductImageCache } from "../utils/productImageCache";
+import { readImageAsDataUrl } from "../utils/userDisplay";
 
 const empty = {
   name: "",
@@ -28,6 +31,7 @@ const empty = {
   unit_price: 0,
   context_type: "general",
   category_id: "",
+  image_base64: null,
 };
 
 const TABS = [
@@ -41,6 +45,7 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(empty);
   const [editingId, setEditingId] = useState(null);
+  const [imageMsg, setImageMsg] = useState("");
   const [context, setContext] = useState("");
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
@@ -61,6 +66,7 @@ export default function ProductsPage() {
     ]);
     setProducts(p);
     setCategories(c);
+    syncProductImageCache(p);
   }
 
   useEffect(() => {
@@ -86,6 +92,7 @@ export default function ProductsPage() {
       unit_price: product.unit_price,
       context_type: product.context_type,
       category_id: product.category_id || "",
+      image_base64: product.image_base64 || null,
     });
     setEditingId(product.id);
     setTab("general");
@@ -107,6 +114,7 @@ export default function ProductsPage() {
         unit_price: Number(form.unit_price),
         context_type: form.context_type,
         category_id: form.category_id || null,
+        image_base64: form.image_base64,
       };
 
       if (editingId) {
@@ -156,11 +164,30 @@ export default function ProductsPage() {
     }
   }
 
+  async function onPickImage(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setImageMsg("");
+    try {
+      const dataUrl = await readImageAsDataUrl(file);
+      setForm((prev) => ({ ...prev, image_base64: dataUrl }));
+    } catch (err) {
+      setImageMsg(err.message);
+    }
+  }
+
+  function onRemoveImage() {
+    setImageMsg("");
+    setForm((prev) => ({ ...prev, image_base64: null }));
+  }
+
   function closeModal() {
     setOpenForm(false);
     setEditingId(null);
     setForm(empty);
     setTab("general");
+    setImageMsg("");
   }
 
   return (
@@ -224,7 +251,12 @@ export default function ProductsPage() {
                   key={p.id}
                   className={`${p.low_stock && p.is_active ? "row-warn" : ""} ${!p.is_active ? "row-inactive" : ""}`}
                 >
-                  <td><strong>{p.name}</strong></td>
+                  <td>
+                    <div className="product-table-thumb">
+                      <ProductImage product={p} size="thumb" />
+                      <strong>{p.name}</strong>
+                    </div>
+                  </td>
                   <td><code>{p.sku}</code></td>
                   <td><span className="badge soft">{contextTypeLabel(p.context_type)}</span></td>
                   <td>
@@ -316,6 +348,28 @@ export default function ProductsPage() {
               </FormRow>
               <FormField label="Descripción">
                 <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Detalles opcionales" />
+              </FormField>
+              <FormField label="Imagen del producto" hint="JPG, PNG, WEBP o GIF · máx. 500 KB">
+                <div className="product-image-upload-wrap">
+                  <ProductImage
+                    product={{ ...form, id: editingId || "draft" }}
+                    size="card"
+                    className="product-image-upload-preview"
+                    alt={form.name || "Vista previa"}
+                  />
+                  <div className="product-image-upload-actions">
+                    <label className="btn-secondary btn-sm">
+                      {form.image_base64 ? "Cambiar imagen" : "Subir imagen"}
+                      <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={onPickImage} />
+                    </label>
+                    {form.image_base64 && (
+                      <button type="button" className="btn-danger-ghost btn-sm" onClick={onRemoveImage}>
+                        Quitar imagen
+                      </button>
+                    )}
+                    {imageMsg && <span className="muted">{imageMsg}</span>}
+                  </div>
+                </div>
               </FormField>
             </div>
           )}

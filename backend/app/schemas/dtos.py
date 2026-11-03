@@ -147,6 +147,12 @@ class ProductCreate(BaseModel):
     unit_price: float = Field(default=0, ge=0)
     context_type: str = Field(default="general", pattern="^(tienda|papeleria|personal|general)$")
     category_id: UUID | None = None
+    image_base64: str | None = None
+
+    @field_validator("image_base64")
+    @classmethod
+    def validate_image(cls, value: str | None) -> str | None:
+        return normalize_avatar_base64(value)
 
 
 class ProductUpdate(BaseModel):
@@ -159,6 +165,12 @@ class ProductUpdate(BaseModel):
     context_type: str | None = Field(default=None, pattern="^(tienda|papeleria|personal|general)$")
     category_id: UUID | None = None
     is_active: bool | None = None
+    image_base64: str | None = None
+
+    @field_validator("image_base64")
+    @classmethod
+    def validate_image(cls, value: str | None) -> str | None:
+        return normalize_avatar_base64(value)
 
 
 class ProductOut(BaseModel):
@@ -173,6 +185,7 @@ class ProductOut(BaseModel):
     context_type: str
     category_id: UUID | None
     is_active: bool
+    image_base64: str | None = None
     created_at: datetime
     updated_at: datetime
     low_stock: bool = False

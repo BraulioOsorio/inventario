@@ -42,7 +42,9 @@ class ProductRepository:
 
     def update(self, product: Product, **fields) -> Product:
         for key, value in fields.items():
-            if value is not None or key in {"description", "category_id"}:
+            if value is not None:
+                setattr(product, key, value)
+            elif key in {"description", "category_id", "image_base64"}:
                 setattr(product, key, value)
         self.db.commit()
         self.db.refresh(product)

@@ -525,6 +525,11 @@
   border-color: rgba(148, 163, 184, 0.16) !important;
 }
 
+[data-theme="dark"] .product-image-placeholder {
+  background: linear-gradient(145deg, rgba(51, 65, 85, 0.55), rgba(30, 41, 59, 0.65)) !important;
+  color: rgba(148, 163, 184, 0.5) !important;
+}
+
 [data-theme="dark"] .pos-product-card:hover:not(.disabled) {
   background: rgba(30, 41, 59, 0.75) !important;
   border-color: rgba(129, 140, 248, 0.3) !important;

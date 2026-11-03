@@ -5,6 +5,8 @@ import { useAuth } from "../auth";
 import { useBusinessDay } from "../businessDay";
 import { Alert, EmptyState, FormActions, FormCard, FormField, FormRow, PageHeader, Panel } from "../components/ui";
 import { movementTypeLabel } from "../utils/labels";
+import ProductImage from "../components/ProductImage";
+import { syncProductImageCache } from "../utils/productImageCache";
 
 const fmt = (n) =>
   Number(n || 0).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
@@ -53,6 +55,7 @@ export default function MovementsPage() {
     setProducts(active);
     setAllProducts(catalog);
     setMovements(m);
+    syncProductImageCache([...catalog, ...active]);
   }
 
   useEffect(() => {
@@ -299,9 +302,15 @@ export default function MovementsPage() {
                   onClick={() => addToCart(p)}
                   disabled={Number(p.quantity) <= 0}
                 >
+                  <ProductImage product={p} size="card" />
                   <span className="pos-product-name">{p.name}</span>
                   <span className="pos-product-price">{fmt(p.unit_price)}</span>
-                  <span className="pos-product-stock">Stock: {p.quantity}</span>
+                  <span className="pos-product-stock">
+                    Disponibles: {p.quantity} {p.quantity === 1 ? "unidad" : "unidades"}
+                  </span>
+                  <span className="pos-product-add" aria-hidden>
+                    +
+                  </span>
                 </button>
               ))}
               {!filtered.length && (
