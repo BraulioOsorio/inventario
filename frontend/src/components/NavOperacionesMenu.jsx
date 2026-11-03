@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { NavLink, useLocation } from "react-router-dom";
 import { useBusinessDay } from "../businessDay";
 import { useSidebar } from "../layout/SidebarContext";
@@ -29,20 +30,39 @@ export default function NavOperacionesMenu() {
   const [busy, setBusy] = useState(false);
   const wrapRef = useRef(null);
   const triggerRef = useRef(null);
-  const [panelTop, setPanelTop] = useState(120);
+  const panelRef = useRef(null);
+  const [panelStyle, setPanelStyle] = useState({ top: 120, left: 280 });
 
   const onMovimientos = location.pathname === "/movimientos";
   const activeMode = new URLSearchParams(location.search).get("mode") || "pos";
   const isGroupActive = onMovimientos;
 
-  function syncPanelTop() {
+  function syncPanelPosition() {
     const rect = triggerRef.current?.getBoundingClientRect();
-    if (rect) setPanelTop(Math.max(12, rect.top - 4));
+    if (!rect) return;
+    const gap = 8;
+    const panelWidth = 300;
+    let left = rect.right + gap;
+    let top = Math.max(12, rect.top - 4);
+
+    if (left + panelWidth > window.innerWidth - 12) {
+      left = Math.max(12, rect.left - panelWidth - gap);
+    }
+
+    setPanelStyle({ top, left });
   }
 
   function openFlyout() {
-    syncPanelTop();
+    syncPanelPosition();
     setFlyoutOpen(true);
+  }
+
+  function toggleFlyout() {
+    if (flyoutOpen) {
+      setFlyoutOpen(false);
+      return;
+    }
+    openFlyout();
   }
 
   useEffect(() => {
@@ -51,11 +71,31 @@ export default function NavOperacionesMenu() {
 
   useEffect(() => {
     if (!flyoutOpen) return undefined;
-    function onDocClick(e) {
-      if (!wrapRef.current?.contains(e.target)) setFlyoutOpen(false);
+
+    function onReposition() {
+      syncPanelPosition();
     }
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
+
+    function onDocPointerDown(e) {
+      const target = e.target;
+      if (wrapRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      setFlyoutOpen(false);
+    }
+
+    const closeTimer = window.setTimeout(() => {
+      document.addEventListener("pointerdown", onDocPointerDown);
+    }, 0);
+
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
+
+    return () => {
+      window.clearTimeout(closeTimer);
+      document.removeEventListener("pointerdown", onDocPointerDown);
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
+    };
   }, [flyoutOpen]);
 
   async function runDayAction(action) {
@@ -75,30 +115,14 @@ export default function NavOperacionesMenu() {
   const showRollover = suggestion === "rollover";
   const showCloseOnly = canOperate && status?.open_day;
 
-  return (
-    <div
-      className={`nav-flyout-wrap ${flyoutOpen ? "flyout-open" : ""}`}
-      ref={wrapRef}
-      onMouseEnter={openFlyout}
-      onMouseLeave={() => setFlyoutOpen(false)}
-    >
-      <button
-        ref={triggerRef}
-        type="button"
-        className={`nav-item nav-flyout-trigger ${isGroupActive ? "active" : ""}`}
-        aria-expanded={flyoutOpen}
-        onClick={() => (flyoutOpen ? setFlyoutOpen(false) : openFlyout())}
-      >
-        <OpsIcon />
-        <span className="nav-text">
-          <strong>Operaciones</strong>
-          <small>Caja diaria y ventas</small>
-        </span>
-        <span className="nav-flyout-chevron" aria-hidden>›</span>
-      </button>
-
-      {flyoutOpen && (
-        <div className="nav-flyout-panel glass-panel" role="menu" style={{ top: panelTop }}>
+  const panel = flyoutOpen
+    ? createPortal(
+        <div
+          ref={panelRef}
+          className="nav-flyout-panel glass-panel"
+          role="menu"
+          style={{ top: panelStyle.top, left: panelStyle.left }}
+        >
           <div className="nav-flyout-head">
             <OpsIcon />
             <div>
@@ -188,7 +212,10 @@ export default function NavOperacionesMenu() {
                   to={item.to}
                   role="menuitem"
                   className={active ? "nav-flyout-link active" : "nav-flyout-link"}
-                  onClick={close}
+                  onClick={() => {
+                    setFlyoutOpen(false);
+                    close();
+                  }}
                 >
                   <span>
                     <strong>{item.label}</strong>
@@ -198,8 +225,33 @@ export default function NavOperacionesMenu() {
               );
             })}
           </div>
-        </div>
-      )}
-    </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return (
+    <>
+      <div className={`nav-flyout-wrap ${flyoutOpen ? "flyout-open" : ""}`} ref={wrapRef}>
+        <button
+          ref={triggerRef}
+          type="button"
+          className={`nav-item nav-flyout-trigger ${isGroupActive ? "active" : ""}`}
+          aria-expanded={flyoutOpen}
+          aria-haspopup="menu"
+          onClick={toggleFlyout}
+        >
+          <OpsIcon />
+          <span className="nav-text">
+            <strong>Operaciones</strong>
+            <small>Caja diaria y ventas</small>
+          </span>
+          <span className="nav-flyout-chevron" aria-hidden>
+            ›
+          </span>
+        </button>
+      </div>
+      {panel}
+    </>
   );
 }
