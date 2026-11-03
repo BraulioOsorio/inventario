@@ -550,6 +550,10 @@
   color: #f1f5f9 !important;
 }
 
+[data-theme="dark"] .movement-note-obs {
+  color: #a5b4fc !important;
+}
+
 [data-theme="dark"] .pos-cart-info strong {
   color: #f8fafc !important;
 }

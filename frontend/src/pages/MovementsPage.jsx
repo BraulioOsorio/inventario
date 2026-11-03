@@ -11,6 +11,21 @@ import { syncProductImageCache } from "../utils/productImageCache";
 const fmt = (n) =>
   Number(n || 0).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
 
+const POS_OBS_SUFFIX = / · Obs: (.+)$/;
+
+function MovementNoteCell({ note }) {
+  if (!note) return "—";
+  const match = note.match(POS_OBS_SUFFIX);
+  if (!match) return note;
+  const summary = note.replace(POS_OBS_SUFFIX, "");
+  return (
+    <span className="movement-note-cell">
+      <span>{summary}</span>
+      <span className="movement-note-obs">Obs: {match[1]}</span>
+    </span>
+  );
+}
+
 const MODES = [
   { id: "pos", label: "Punto de venta", hint: "Toca productos y cobra" },
   { id: "in", label: "Entrada", hint: "Ingresar stock" },
@@ -533,7 +548,7 @@ export default function MovementsPage() {
                       <th>Producto</th>
                       <th>Tipo</th>
                       <th>Cantidad</th>
-                      <th>Nota</th>
+                      <th>Nota / observación</th>
                       <th>Fecha</th>
                     </tr>
                   </thead>
@@ -554,7 +569,9 @@ export default function MovementsPage() {
                             </span>
                           </td>
                           <td><strong>{m.quantity}</strong></td>
-                          <td className="muted">{m.note || "—"}</td>
+                          <td className="movement-note-td">
+                            <MovementNoteCell note={m.note} />
+                          </td>
                           <td>{new Date(m.created_at).toLocaleString("es-CO")}</td>
                         </tr>
                       );
