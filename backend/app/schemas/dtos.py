@@ -359,6 +359,65 @@ class LoanOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# --- Crédito cliente (cuenta con canasta) ---
+class CreditLineCreate(BaseModel):
+    product_id: UUID
+    quantity: int = Field(gt=0)
+
+
+class CreditChargeCreate(BaseModel):
+    customer_id: UUID
+    lines: list[CreditLineCreate] = Field(min_length=1)
+    due_date: datetime | None = None
+    notes: str | None = None
+
+
+class CreditPaymentCreate(BaseModel):
+    amount: float = Field(gt=0)
+    notes: str | None = None
+
+
+class CreditLineOut(BaseModel):
+    id: UUID
+    product_id: UUID
+    product_name: str | None = None
+    quantity: int
+    unit_price: float
+    line_total: float
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CreditPaymentOut(BaseModel):
+    id: UUID
+    amount: float
+    notes: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CreditAccountOut(BaseModel):
+    id: UUID
+    customer_id: UUID
+    customer_name: str | None = None
+    customer_phone: str | None = None
+    balance_due: float
+    due_date: datetime | None
+    status: str
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+    is_overdue: bool = False
+    lines_count: int = 0
+    items_summary: str | None = None
+    lines: list[CreditLineOut] = []
+    payments: list[CreditPaymentOut] = []
+
+    model_config = {"from_attributes": True}
+
+
 # --- Notificaciones Globales / Campanita ---
 class NotificationItem(BaseModel):
     id: str

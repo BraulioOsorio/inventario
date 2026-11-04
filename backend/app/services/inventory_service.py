@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.entities import SupplierOrder, User
-from app.repositories.category_repository import CategoryRepository
+from app.repositories.credit_repository import CreditRepository
 from app.repositories.customer_repository import CustomerRepository
 from app.repositories.loan_repository import LoanRepository
 from app.repositories.order_repository import OrderRepository
@@ -43,6 +43,7 @@ class InventoryService:
         self.customers = CustomerRepository(db)
         self.orders = OrderRepository(db)
         self.loans = LoanRepository(db)
+        self.credits = CreditRepository(db)
 
     # --- Categories ---
     def list_categories(self, user: User) -> list[CategoryOut]:
@@ -180,51 +181,58 @@ class InventoryService:
         self.customers.soft_delete(customer)
 
     # --- Pedidos / Órdenes a Proveedores (SupplierOrder) ---
+    @staticmethod
+    def _safe_month_day(reference: datetime, monthly_day: int) -> datetime:
+        day = max(1, min(monthly_day, 28))
+        try:
+            return reference.replace(day=monthly_day, hour=0, minute=0, second=0, microsecond=0)
+        except ValueError:
+            return reference.replace(day=day, hour=0, minute=0, second=0, microsecond=0)
+
+    def _monthly_target_from(self, now: datetime, monthly_day: int) -> datetime:
+        """Próxima fecha mensual (hoy o futuro en el calendario)."""
+        this_month = self._safe_month_day(now, monthly_day)
+        if this_month.date() >= now.date():
+            return this_month
+        next_year = now.year + (1 if now.month == 12 else 0)
+        next_month = 1 if now.month == 12 else now.month + 1
+        anchor = now.replace(
+            year=next_year,
+            month=next_month,
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        return self._safe_month_day(anchor, monthly_day)
+
     def _is_order_due_soon(self, order: SupplierOrder, now: datetime) -> tuple[bool, datetime | None]:
-        if order.status not in {"pendiente", "solicitado"}:
+        if order.status == "cancelado":
             return False, None
 
         target_date: datetime | None = None
-        if order.is_monthly_recurring and order.monthly_day:
-            day = max(1, min(order.monthly_day, 28))
-            try:
-                this_month = now.replace(day=order.monthly_day, hour=0, minute=0, second=0, microsecond=0)
-            except ValueError:
-                this_month = now.replace(day=day, hour=0, minute=0, second=0, microsecond=0)
 
-            if this_month.date() >= now.date():
-                target_date = this_month
+        if order.is_monthly_recurring and order.monthly_day:
+            # Pedidos recurrentes: avisar cada mes (7 días antes), aunque estén en "recibido"
+            # del ciclo anterior; solo se excluye "cancelado".
+            this_cycle = self._safe_month_day(now, order.monthly_day)
+            if order.status == "recibido" and now.date() > this_cycle.date():
+                anchor = this_cycle + timedelta(days=1)
+                target_date = self._monthly_target_from(anchor, order.monthly_day)
             else:
-                next_year = now.year + (1 if now.month == 12 else 0)
-                next_month = 1 if now.month == 12 else now.month + 1
-                try:
-                    target_date = now.replace(
-                        year=next_year,
-                        month=next_month,
-                        day=order.monthly_day,
-                        hour=0,
-                        minute=0,
-                        second=0,
-                        microsecond=0,
-                    )
-                except ValueError:
-                    target_date = now.replace(
-                        year=next_year,
-                        month=next_month,
-                        day=day,
-                        hour=0,
-                        minute=0,
-                        second=0,
-                        microsecond=0,
-                    )
-        elif order.expected_date:
+                target_date = self._monthly_target_from(now, order.monthly_day)
+        else:
+            if order.status not in {"pendiente", "solicitado"}:
+                return False, None
             target_date = order.expected_date
+            if target_date and target_date.tzinfo is None:
+                target_date = target_date.replace(tzinfo=timezone.utc)
 
         if not target_date:
             return False, None
 
         diff_days = (target_date.date() - now.date()).days
-        # Una semana antes (<= 7 días) o retrasado (< 0)
         return diff_days <= 7, target_date
 
     def list_orders(
@@ -409,16 +417,20 @@ class InventoryService:
                 timing_str = (
                     "¡Hoy es la fecha programada!"
                     if diff == 0
-                    else f"en {diff} días (fecha mensual)"
+                    else f"en {diff} días"
                     if diff > 0
                     else f"retrasado por {abs(diff)} días"
                 )
+                cycle_hint = " (pedido mensual)" if o.is_monthly_recurring else ""
                 items.append(
                     NotificationItem(
-                        id=f"order_{o.id}",
+                        id=f"order_{o.id}_{target_date.date().isoformat()}",
                         category="order",
                         title=f"Pedido: {o.supplier_name}",
-                        message=f"'{o.title}' — {timing_str}. Contacto: {o.supplier_contact or 'No especificado'}.",
+                        message=(
+                            f"'{o.title}'{cycle_hint} — {timing_str}. "
+                            f"Contacto: {o.supplier_contact or 'No especificado'}."
+                        ),
                         severity="danger" if diff < 0 else "warn",
                         link="/pedidos",
                         date=target_date or o.expected_date,
@@ -426,7 +438,28 @@ class InventoryService:
                     )
                 )
 
-        # 3. Alertas de préstamos vencidos
+        # 3. Créditos vencidos (cuenta cliente)
+        credit_accounts = self.credits.list_by_owner(user.id, status="activo")
+        for acc in credit_accounts:
+            if float(acc.balance_due) <= 0 or not acc.due_date:
+                continue
+            if acc.due_date.date() < now.date():
+                days_overdue = (now.date() - acc.due_date.date()).days
+                name = acc.customer.full_name if acc.customer else "Cliente"
+                items.append(
+                    NotificationItem(
+                        id=f"credit_overdue_{acc.id}",
+                        category="loan",
+                        title=f"Crédito vencido: {name}",
+                        message=f"Debe ${float(acc.balance_due):,.0f} (vencido hace {days_overdue} días).",
+                        severity="danger",
+                        link="/prestamos",
+                        date=acc.due_date,
+                        extra={"credit_account_id": str(acc.id), "customer": name},
+                    )
+                )
+
+        # 4. Alertas de préstamos vencidos (legacy)
         loans = self.loans.list_by_owner(user.id, status="activo")
         for l in loans:
             if l.due_date and l.due_date.date() < now.date():

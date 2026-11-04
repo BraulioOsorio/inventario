@@ -8,7 +8,7 @@ const TITLES = {
   "/": { title: "Panel de inicio", section: "Resumen" },
   "/productos": { title: "Catálogo de productos", section: "Inventario" },
   "/pedidos": { title: "Pedidos a proveedores", section: "Compras" },
-  "/prestamos": { title: "Préstamos de inventario", section: "Custodia" },
+  "/prestamos": { title: "Créditos de clientes", section: "Operaciones" },
   "/clientes": { title: "Directorio de clientes", section: "Contactos" },
   "/categorias": { title: "Categorías", section: "Organización" },
   "/movimientos": { title: "Punto de venta", section: "Operaciones" },

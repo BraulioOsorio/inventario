@@ -10,7 +10,7 @@ import { BusinessDayProvider } from "../businessDay";
 const NAV = [
   { to: "/productos", label: "Productos", icon: "box", desc: "Catálogo completo" },
   { to: "/pedidos", label: "Pedidos", icon: "orders", desc: "Compras a proveedores" },
-  { to: "/prestamos", label: "Préstamos", icon: "loans", desc: "Custodia y devolución" },
+  { to: "/prestamos", label: "Créditos", icon: "loans", desc: "Deudas y abonos" },
   { to: "/clientes", label: "Clientes", icon: "customers", desc: "Directorio de contactos" },
   { to: "/categorias", label: "Categorías", icon: "tag", desc: "Organización" },
   { to: "/alertas", label: "Alertas", icon: "bell", desc: "Stock bajo" },

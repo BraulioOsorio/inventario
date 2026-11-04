@@ -148,6 +148,22 @@ export const api = {
     request(`/api/loans/${id}/return`, { method: "POST", body: payload, token }),
   deleteLoan: (token, id) =>
     request(`/api/loans/${id}`, { method: "DELETE", token }),
+  listCreditAccounts: (token, params = {}) => {
+    const q = new URLSearchParams();
+    if (params.status) q.set("status", params.status);
+    const qs = q.toString();
+    return request(`/api/credit-accounts${qs ? `?${qs}` : ""}`, { token });
+  },
+  getCreditAccount: (token, id) => request(`/api/credit-accounts/${id}`, { token }),
+  chargeCredit: (token, payload) =>
+    request("/api/credit-accounts/charge", {
+      method: "POST",
+      body: payload,
+      token,
+      clientDate: clientLocalDate(),
+    }),
+  payCredit: (token, id, payload) =>
+    request(`/api/credit-accounts/${id}/payments`, { method: "POST", body: payload, token }),
   // Notificaciones / Campanita
   getNotifications: (token) =>
     request("/api/notifications", { token }),

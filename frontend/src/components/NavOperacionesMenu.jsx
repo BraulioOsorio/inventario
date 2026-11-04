@@ -6,6 +6,7 @@ import { useSidebar } from "../layout/SidebarContext";
 
 const SUB_LINKS = [
   { to: "/movimientos", mode: null, label: "Punto de venta", desc: "Cobrar y vender" },
+  { to: "/movimientos?mode=credit", mode: "credit", label: "Crédito cliente", desc: "Canasta a fiado" },
   { to: "/movimientos?mode=in", mode: "in", label: "Entrada de stock", desc: "Ingresar mercancía" },
   { to: "/movimientos?mode=adjust", mode: "adjust", label: "Ajuste inventario", desc: "Salida sin cobro" },
   { to: "/movimientos?mode=history", mode: "history", label: "Historial", desc: "Ver movimientos" },

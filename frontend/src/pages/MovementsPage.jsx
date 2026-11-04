@@ -28,6 +28,7 @@ function MovementNoteCell({ note }) {
 
 const MODES = [
   { id: "pos", label: "Punto de venta", hint: "Toca productos y cobra" },
+  { id: "credit", label: "Crédito", hint: "Canasta a fiado" },
   { id: "in", label: "Entrada", hint: "Ingresar stock" },
   { id: "adjust", label: "Ajuste inventario", hint: "Salida sin cobro" },
   { id: "history", label: "Historial", hint: "Ver movimientos" },
@@ -56,6 +57,11 @@ export default function MovementsPage() {
   const [saleNote, setSaleNote] = useState("");
   const [inForm, setInForm] = useState({ product_id: "", quantity: 1, note: "" });
   const [adjustForm, setAdjustForm] = useState({ product_id: "", quantity: 1, note: "" });
+  const [customers, setCustomers] = useState([]);
+  const [creditCustomerId, setCreditCustomerId] = useState("");
+  const [creditDueDate, setCreditDueDate] = useState("");
+  const [creditNote, setCreditNote] = useState("");
+  const [creditCart, setCreditCart] = useState([]);
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [busy, setBusy] = useState(false);
@@ -63,14 +69,16 @@ export default function MovementsPage() {
   const byId = useMemo(() => productMap(allProducts), [allProducts]);
 
   async function load() {
-    const [active, catalog, m] = await Promise.all([
+    const [active, catalog, m, c] = await Promise.all([
       api.listProducts(token, { active_only: true }),
       api.listProducts(token, { active_only: false }),
       api.listMovements(token),
+      api.listCustomers(token),
     ]);
     setProducts(active);
     setAllProducts(catalog);
     setMovements(m);
+    setCustomers(c.filter((x) => x.is_active !== false));
     syncProductImageCache([...catalog, ...active]);
   }
 
@@ -117,6 +125,99 @@ export default function MovementsPage() {
   const receivedNum = Number(received) || 0;
   const change = Math.max(0, receivedNum - subtotal);
   const canPay = cart.length > 0 && receivedNum >= subtotal && subtotal > 0;
+
+  const creditSubtotal = useMemo(
+    () => creditCart.reduce((acc, line) => acc + line.unit_price * line.quantity, 0),
+    [creditCart]
+  );
+  const canChargeCredit = creditCart.length > 0 && creditCustomerId && creditSubtotal > 0;
+
+  const activeCreditCustomer = useMemo(
+    () => customers.find((c) => String(c.id) === String(creditCustomerId)),
+    [customers, creditCustomerId]
+  );
+
+  function addToCreditCart(product) {
+    if (Number(product.quantity) <= 0) {
+      setError(`"${product.name}" está agotado.`);
+      return;
+    }
+    setError("");
+    setCreditCart((prev) => {
+      const idx = prev.findIndex((l) => l.product_id === product.id);
+      if (idx >= 0) {
+        const line = prev[idx];
+        if (line.quantity >= Number(product.quantity)) {
+          setError(`Stock máximo alcanzado para "${product.name}".`);
+          return prev;
+        }
+        const next = [...prev];
+        next[idx] = { ...line, quantity: line.quantity + 1 };
+        return next;
+      }
+      return [
+        ...prev,
+        {
+          product_id: product.id,
+          name: product.name,
+          unit_price: Number(product.unit_price) || 0,
+          quantity: 1,
+          max_stock: Number(product.quantity),
+        },
+      ];
+    });
+  }
+
+  function changeCreditQty(productId, delta) {
+    setCreditCart((prev) =>
+      prev
+        .map((line) => {
+          if (line.product_id !== productId) return line;
+          const q = line.quantity + delta;
+          if (q <= 0) return null;
+          if (q > line.max_stock) {
+            setError("No hay suficiente stock.");
+            return line;
+          }
+          return { ...line, quantity: q };
+        })
+        .filter(Boolean)
+    );
+  }
+
+  function clearCreditCart() {
+    setCreditCart([]);
+    setCreditNote("");
+    setError("");
+  }
+
+  async function checkoutCredit() {
+    if (!canChargeCredit || !ensureDayOpen()) return;
+    setBusy(true);
+    setError("");
+    setOk("");
+    try {
+      const result = await api.chargeCredit(token, {
+        customer_id: creditCustomerId,
+        due_date: creditDueDate ? new Date(creditDueDate).toISOString() : null,
+        notes: creditNote.trim() || null,
+        lines: creditCart.map((line) => ({
+          product_id: line.product_id,
+          quantity: line.quantity,
+        })),
+      });
+      setOk(
+        `Crédito registrado · ${activeCreditCustomer?.full_name || "Cliente"} · Deuda total ${fmt(result.balance_due)}`
+      );
+      clearCreditCart();
+      await load();
+      await refreshBusinessDay();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function addToCart(product) {
     if (Number(product.quantity) <= 0) {
@@ -428,6 +529,141 @@ export default function MovementsPage() {
                 onClick={checkout}
               >
                 {busy ? "Procesando…" : `Cobrar ${fmt(subtotal)}`}
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {mode === "credit" && (
+        <div className="pos-layout">
+          <section className="pos-catalog glass-panel">
+            <div className="pos-search-wrap">
+              <input
+                className="pos-search"
+                placeholder="Nombre o marca (mín. 3 letras)"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <p className="pos-credit-hint">
+              El cliente debe estar registrado. Puede volver otro día y se sumará a la misma deuda activa.
+            </p>
+            <div className="pos-product-grid">
+              {filtered.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`pos-product-card ${Number(p.quantity) <= 0 ? "disabled" : ""}`}
+                  onClick={() => addToCreditCart(p)}
+                  disabled={Number(p.quantity) <= 0}
+                >
+                  <ProductImage product={p} size="card" />
+                  <span className="pos-product-name">{p.name}</span>
+                  <span className="pos-product-price">{fmt(p.unit_price)}</span>
+                  <span className="pos-product-stock">
+                    Disponibles: {p.quantity} {p.quantity === 1 ? "unidad" : "unidades"}
+                  </span>
+                  <span className="pos-product-add" aria-hidden>
+                    +
+                  </span>
+                </button>
+              ))}
+              {!filtered.length && <p className="pos-empty">No hay productos activos con stock.</p>}
+            </div>
+          </section>
+
+          <aside className="pos-ticket glass-panel glass-panel-accent">
+            <div className="pos-ticket-head">
+              <h2>Canasta a crédito</h2>
+              <span className="badge">{creditCart.length} ítems</span>
+            </div>
+
+            <FormField label="Cliente registrado" required>
+              <select
+                required
+                value={creditCustomerId}
+                onChange={(e) => setCreditCustomerId(e.target.value)}
+              >
+                <option value="">Selecciona un cliente…</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.full_name}
+                    {c.phone ? ` · ${c.phone}` : ""}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            {!customers.length && (
+              <p className="muted tiny">
+                No hay clientes.{" "}
+                <button type="button" className="text-link" onClick={() => navigate("/clientes")}>
+                  Registra uno primero
+                </button>
+              </p>
+            )}
+
+            <FormField label="Fecha límite (opcional)">
+              <input
+                type="date"
+                value={creditDueDate}
+                onChange={(e) => setCreditDueDate(e.target.value)}
+              />
+            </FormField>
+
+            <ul className="pos-cart-list">
+              {creditCart.map((line) => (
+                <li key={line.product_id} className="pos-cart-line">
+                  <div className="pos-cart-info">
+                    <strong>{line.name}</strong>
+                    <span>{fmt(line.unit_price)} c/u</span>
+                  </div>
+                  <div className="pos-cart-controls">
+                    <button type="button" onClick={() => changeCreditQty(line.product_id, -1)} aria-label="Menos">
+                      −
+                    </button>
+                    <span>{line.quantity}</span>
+                    <button type="button" onClick={() => changeCreditQty(line.product_id, 1)} aria-label="Más">
+                      +
+                    </button>
+                  </div>
+                  <div className="pos-cart-line-total">{fmt(line.unit_price * line.quantity)}</div>
+                </li>
+              ))}
+              {!creditCart.length && (
+                <li className="pos-cart-empty">Agrega productos a la canasta de crédito</li>
+              )}
+            </ul>
+
+            <div className="pos-summary">
+              <div className="pos-summary-row pos-total">
+                <span>Total de esta venta a crédito</span>
+                <strong>{fmt(creditSubtotal)}</strong>
+              </div>
+              <label className="pos-received-label">Nota (opcional)</label>
+              <input
+                className="pos-received-input"
+                placeholder="Ej. Paga la otra quincena"
+                value={creditNote}
+                onChange={(e) => setCreditNote(e.target.value)}
+              />
+            </div>
+
+            <div className="pos-actions">
+              <button type="button" className="btn-secondary btn-block" onClick={clearCreditCart} disabled={!creditCart.length}>
+                Vaciar canasta
+              </button>
+              <button
+                type="button"
+                className="btn-primary btn-block pos-pay-btn"
+                disabled={!canChargeCredit || busy || !canOperate}
+                onClick={checkoutCredit}
+              >
+                {busy ? "Guardando…" : `Registrar crédito ${fmt(creditSubtotal)}`}
+              </button>
+              <button type="button" className="btn-ghost btn-block" onClick={() => navigate("/prestamos")}>
+                Ver deudas y abonos
               </button>
             </div>
           </aside>

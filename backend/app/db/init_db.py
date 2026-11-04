@@ -50,6 +50,51 @@ def migrate_schema() -> None:
                 """
             )
         )
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS credit_accounts (
+                    id UUID PRIMARY KEY,
+                    owner_id UUID NOT NULL REFERENCES users(id),
+                    customer_id UUID NOT NULL REFERENCES customers(id),
+                    balance_due NUMERIC(12, 2) NOT NULL DEFAULT 0,
+                    due_date TIMESTAMPTZ,
+                    status VARCHAR(40) NOT NULL DEFAULT 'activo',
+                    notes TEXT,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS credit_lines (
+                    id UUID PRIMARY KEY,
+                    account_id UUID NOT NULL REFERENCES credit_accounts(id) ON DELETE CASCADE,
+                    product_id UUID NOT NULL REFERENCES products(id),
+                    quantity INTEGER NOT NULL,
+                    unit_price NUMERIC(12, 2) NOT NULL,
+                    line_total NUMERIC(12, 2) NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS credit_payments (
+                    id UUID PRIMARY KEY,
+                    account_id UUID NOT NULL REFERENCES credit_accounts(id) ON DELETE CASCADE,
+                    amount NUMERIC(12, 2) NOT NULL,
+                    notes TEXT,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+        )
 
 
 def seed_admin() -> None:

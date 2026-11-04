@@ -1172,9 +1172,29 @@ textarea:focus {
   max-width: 1400px;
 }
 
+.pos-credit-hint {
+  margin: 0 0 0.75rem;
+  padding: 0 0.15rem;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.credit-detail .h3-panel {
+  margin: 1rem 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.form-actions-inline {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .glass-tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
   gap: 0.65rem;
   padding: 0.5rem;
   background: var(--glass-bg);

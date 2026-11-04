@@ -38,6 +38,7 @@ class User(Base):
     customers: Mapped[list["Customer"]] = relationship(back_populates="owner")
     orders: Mapped[list["SupplierOrder"]] = relationship(back_populates="owner")
     loans: Mapped[list["Loan"]] = relationship(back_populates="owner")
+    credit_accounts: Mapped[list["CreditAccount"]] = relationship(back_populates="owner")
 
 
 class Category(Base):
@@ -129,6 +130,7 @@ class Customer(Base):
 
     owner: Mapped["User"] = relationship(back_populates="customers")
     loans: Mapped[list["Loan"]] = relationship(back_populates="customer")
+    credit_accounts: Mapped[list["CreditAccount"]] = relationship(back_populates="customer")
 
 
 class SupplierOrder(Base):
@@ -176,3 +178,51 @@ class Loan(Base):
     owner: Mapped["User"] = relationship(back_populates="loans")
     product: Mapped["Product"] = relationship(back_populates="loans")
     customer: Mapped["Customer | None"] = relationship(back_populates="loans")
+
+
+class CreditAccount(Base):
+    __tablename__ = "credit_accounts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    customer_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False)
+    balance_due: Mapped[float] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(40), default="activo")  # activo | saldado
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    owner: Mapped["User"] = relationship(back_populates="credit_accounts")
+    customer: Mapped["Customer"] = relationship(back_populates="credit_accounts")
+    lines: Mapped[list["CreditLine"]] = relationship(back_populates="account", cascade="all, delete-orphan")
+    payments: Mapped[list["CreditPayment"]] = relationship(back_populates="account", cascade="all, delete-orphan")
+
+
+class CreditLine(Base):
+    __tablename__ = "credit_lines"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("credit_accounts.id"), nullable=False)
+    product_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    unit_price: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
+    line_total: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    account: Mapped["CreditAccount"] = relationship(back_populates="lines")
+    product: Mapped["Product"] = relationship()
+
+
+class CreditPayment(Base):
+    __tablename__ = "credit_payments"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("credit_accounts.id"), nullable=False)
+    amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    account: Mapped["CreditAccount"] = relationship(back_populates="payments")
