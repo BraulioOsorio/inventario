@@ -33,15 +33,6 @@ def list_credit_accounts(
     return CreditService(db).list_accounts(user, status=status)
 
 
-@router.get("/{account_id}", response_model=CreditAccountOut)
-def get_credit_account(
-    account_id: UUID,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    return CreditService(db).get_account(user, account_id)
-
-
 @router.post("/charge", response_model=CreditAccountOut, status_code=201)
 def charge_credit(
     payload: CreditChargeCreate,
@@ -51,6 +42,15 @@ def charge_credit(
 ):
     BusinessDayService(db).assert_can_operate(user, client_date)
     return CreditService(db).charge(user, payload)
+
+
+@router.get("/{account_id}", response_model=CreditAccountOut)
+def get_credit_account(
+    account_id: UUID,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return CreditService(db).get_account(user, account_id)
 
 
 @router.post("/{account_id}/payments", response_model=CreditAccountOut)

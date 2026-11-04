@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 1440
 
-    CORS_ORIGINS: str = "http://localhost:5173"
+    CORS_ORIGINS: str = "http://localhost:5173,https://inventario-web-7qyp.onrender.com"
 
     ADMIN_EMAIL: str = "braulioosoriomartinez@gmail.com"
     ADMIN_PASSWORD: str = ""

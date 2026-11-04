@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.entities import SupplierOrder, User
+from app.repositories.category_repository import CategoryRepository
 from app.repositories.credit_repository import CreditRepository
 from app.repositories.customer_repository import CustomerRepository
 from app.repositories.loan_repository import LoanRepository
