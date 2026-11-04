@@ -131,14 +131,14 @@ export default function HomePage() {
     Promise.all([
       api.listProducts(token),
       api.listCategories(token),
-      api.listMovements(token),
+      api.listMovements(token, { page: 1, page_size: 50 }),
       api.listOrders(token),
       api.listLoans(token),
     ])
       .then(([p, c, m, o, l]) => {
         setProducts(p);
         setCategories(c);
-        setMovements(m);
+        setMovements(m.items || []);
         setOrders(o || []);
         setLoans(l || []);
       })

@@ -53,6 +53,22 @@ def migrate_schema() -> None:
         conn.execute(
             text(
                 """
+                ALTER TABLE stock_movements
+                ADD COLUMN IF NOT EXISTS stock_before INTEGER
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                ALTER TABLE stock_movements
+                ADD COLUMN IF NOT EXISTS reverted_at TIMESTAMPTZ
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
                 CREATE TABLE IF NOT EXISTS credit_accounts (
                     id UUID PRIMARY KEY,
                     owner_id UUID NOT NULL REFERENCES users(id),

@@ -71,22 +71,48 @@ class MovementRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def list_by_owner(self, owner_id: UUID, limit: int = 50) -> list[StockMovement]:
+    def list_by_owner(
+        self,
+        owner_id: UUID,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[StockMovement]:
         return (
             self.db.query(StockMovement)
             .filter(StockMovement.owner_id == owner_id)
             .order_by(StockMovement.created_at.desc())
+            .offset(offset)
             .limit(limit)
             .all()
         )
 
-    def create(self, owner_id: UUID, product_id: UUID, movement_type: str, quantity: int, note: str | None):
+    def count_by_owner(self, owner_id: UUID) -> int:
+        return self.db.query(StockMovement).filter(StockMovement.owner_id == owner_id).count()
+
+    def get(self, movement_id: UUID, owner_id: UUID) -> StockMovement | None:
+        return (
+            self.db.query(StockMovement)
+            .filter(StockMovement.id == movement_id, StockMovement.owner_id == owner_id)
+            .first()
+        )
+
+    def create(
+        self,
+        owner_id: UUID,
+        product_id: UUID,
+        movement_type: str,
+        quantity: int,
+        note: str | None,
+        stock_before: int | None = None,
+    ):
         movement = StockMovement(
             owner_id=owner_id,
             product_id=product_id,
             movement_type=movement_type,
             quantity=quantity,
             note=note,
+            stock_before=stock_before,
         )
         self.db.add(movement)
         self.db.commit()

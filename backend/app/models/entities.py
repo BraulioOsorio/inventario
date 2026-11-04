@@ -105,6 +105,8 @@ class StockMovement(Base):
     movement_type: Mapped[str] = mapped_column(String(20), nullable=False)  # in|out|adjust
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    stock_before: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    reverted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     owner: Mapped["User"] = relationship(back_populates="movements")

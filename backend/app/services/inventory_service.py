@@ -24,6 +24,7 @@ from app.schemas.dtos import (
     LoanUpdate,
     MovementCreate,
     MovementOut,
+    MovementPageOut,
     NotificationItem,
     NotificationsSummary,
     ProductCreate,
@@ -125,8 +126,18 @@ class InventoryService:
         self.products.soft_delete(product)
 
     # --- Movements ---
-    def list_movements(self, user: User) -> list[MovementOut]:
-        return [MovementOut.model_validate(m) for m in self.movements.list_by_owner(user.id)]
+    def list_movements(self, user: User, page: int = 1, page_size: int = 15) -> MovementPageOut:
+        page_size = max(1, min(page_size, 100))
+        page = max(1, page)
+        offset = (page - 1) * page_size
+        total = self.movements.count_by_owner(user.id)
+        rows = self.movements.list_by_owner(user.id, limit=page_size, offset=offset)
+        return MovementPageOut(
+            items=[MovementOut.model_validate(m) for m in rows],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
 
     def register_movement(self, user: User, payload: MovementCreate) -> MovementOut:
         product = self.products.get(payload.product_id, user.id)
@@ -138,6 +149,7 @@ class InventoryService:
                 detail="El producto está inactivo y no puede venderse ni ajustarse",
             )
 
+        stock_before = product.quantity
         if payload.movement_type == "in":
             product.quantity += payload.quantity
         elif payload.movement_type == "out":
@@ -156,7 +168,45 @@ class InventoryService:
             movement_type=payload.movement_type,
             quantity=payload.quantity,
             note=payload.note,
+            stock_before=stock_before,
         )
+        return MovementOut.model_validate(movement)
+
+    def revert_movement(self, user: User, movement_id: UUID) -> MovementOut:
+        movement = self.movements.get(movement_id, user.id)
+        if not movement:
+            raise HTTPException(status_code=404, detail="Movimiento no encontrado")
+        if movement.reverted_at is not None:
+            raise HTTPException(status_code=400, detail="Este movimiento ya fue revertido")
+
+        product = self.products.get(movement.product_id, user.id)
+        if not product:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+        if movement.movement_type == "in":
+            if product.quantity < movement.quantity:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No hay stock suficiente para revertir esta entrada",
+                )
+            product.quantity -= movement.quantity
+        elif movement.movement_type == "out":
+            product.quantity += movement.quantity
+        elif movement.movement_type == "adjust":
+            if movement.stock_before is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No se puede revertir este ajuste (registro anterior sin respaldo)",
+                )
+            product.quantity = movement.stock_before
+        else:
+            raise HTTPException(status_code=400, detail="Tipo de movimiento inválido")
+
+        movement.reverted_at = datetime.now(timezone.utc)
+        self.db.add(product)
+        self.db.add(movement)
+        self.db.commit()
+        self.db.refresh(movement)
         return MovementOut.model_validate(movement)
 
     # --- Clientes (Customer) ---
@@ -314,6 +364,7 @@ class InventoryService:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Stock insuficiente para prestar ({product.quantity} disponibles)",
                 )
+            stock_before = product.quantity
             product.quantity -= payload.quantity
             self.db.add(product)
             self.movements.create(
@@ -322,6 +373,7 @@ class InventoryService:
                 movement_type="out",
                 quantity=payload.quantity,
                 note=f"Préstamo a {payload.borrower_name}",
+                stock_before=stock_before,
             )
 
         data = payload.model_dump(exclude={"discount_stock"})
@@ -352,6 +404,7 @@ class InventoryService:
         if payload.return_to_stock:
             product = self.products.get(loan.product_id, user.id)
             if product:
+                stock_before = product.quantity
                 product.quantity += loan.quantity
                 self.db.add(product)
                 self.movements.create(
@@ -360,6 +413,7 @@ class InventoryService:
                     movement_type="in",
                     quantity=loan.quantity,
                     note=f"Devolución préstamo de {loan.borrower_name}",
+                    stock_before=stock_before,
                 )
 
         self.db.add(loan)

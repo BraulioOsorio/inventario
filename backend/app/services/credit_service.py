@@ -124,6 +124,7 @@ class CreditService:
             line_total = round(unit_price * item.quantity, 2)
             charge_total += line_total
 
+            stock_before = product.quantity
             product.quantity -= item.quantity
             self.db.add(product)
             self.movements.create(
@@ -132,6 +133,7 @@ class CreditService:
                 movement_type="out",
                 quantity=item.quantity,
                 note=f"Crédito · {customer_label} · {line_total:,.0f}",
+                stock_before=stock_before,
             )
             self.credits.add_line(
                 account.id,

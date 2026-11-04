@@ -228,9 +228,17 @@ class MovementOut(BaseModel):
     movement_type: str
     quantity: int
     note: str | None
+    reverted_at: datetime | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class MovementPageOut(BaseModel):
+    items: list[MovementOut]
+    total: int
+    page: int
+    page_size: int
 
 
 # --- Clientes (Customer) ---

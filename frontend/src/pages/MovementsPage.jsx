@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { useBusinessDay } from "../businessDay";
-import { Alert, EmptyState, FormActions, FormCard, FormField, FormRow, PageHeader, Panel } from "../components/ui";
+import { Alert, EmptyState, FormActions, FormCard, FormField, FormRow, PageHeader, Panel, RowMenuIcons, TableRowMenu } from "../components/ui";
 import { movementTypeLabel } from "../utils/labels";
 import ProductImage from "../components/ProductImage";
 import { syncProductImageCache } from "../utils/productImageCache";
@@ -34,6 +34,8 @@ const MODES = [
   { id: "history", label: "Historial", hint: "Ver movimientos" },
 ];
 
+const HISTORY_PAGE_SIZE = 15;
+
 function productMap(products) {
   const m = {};
   products.forEach((p) => {
@@ -50,6 +52,8 @@ export default function MovementsPage() {
   const [products, setProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [movements, setMovements] = useState([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyTotal, setHistoryTotal] = useState(0);
   const [mode, setMode] = useState("pos");
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState([]);
@@ -68,23 +72,45 @@ export default function MovementsPage() {
 
   const byId = useMemo(() => productMap(allProducts), [allProducts]);
 
-  async function load() {
-    const [active, catalog, m, c] = await Promise.all([
+  async function loadCatalog() {
+    const [active, catalog, c] = await Promise.all([
       api.listProducts(token, { active_only: true }),
       api.listProducts(token, { active_only: false }),
-      api.listMovements(token),
       api.listCustomers(token),
     ]);
     setProducts(active);
     setAllProducts(catalog);
-    setMovements(m);
     setCustomers(c.filter((x) => x.is_active !== false));
     syncProductImageCache([...catalog, ...active]);
+  }
+
+  async function loadHistory(page = historyPage) {
+    const data = await api.listMovements(token, { page, page_size: HISTORY_PAGE_SIZE });
+    setMovements(data.items || []);
+    setHistoryTotal(data.total || 0);
+    setHistoryPage(data.page || page);
+  }
+
+  async function refreshData(historyPageOverride) {
+    await loadCatalog();
+    if (mode === "history") {
+      await loadHistory(historyPageOverride ?? historyPage);
+    }
+  }
+
+  async function load() {
+    await refreshData();
   }
 
   useEffect(() => {
     load().catch((e) => setError(e.message));
   }, [token]);
+
+  useEffect(() => {
+    if (mode !== "history") return;
+    loadHistory(historyPage).catch((e) => setError(e.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, historyPage, token]);
 
   useEffect(() => {
     const modeParam = searchParams.get("mode");
@@ -289,6 +315,34 @@ export default function MovementsPage() {
     }
     return true;
   }
+
+  async function onRevertMovement(movement) {
+    const product = byId[movement.product_id];
+    const label = product?.name || "este producto";
+    if (
+      !confirm(
+        `¿Revertir el movimiento de "${label}"?\n\nSe deshará por completo (stock y registro). Esta acción no se puede deshacer.`
+      )
+    ) {
+      return;
+    }
+    if (!ensureDayOpen()) return;
+    setBusy(true);
+    setError("");
+    setOk("");
+    try {
+      await api.revertMovement(token, movement.id);
+      setOk("Movimiento revertido. El stock quedó actualizado.");
+      await refreshData(historyPage);
+      await refreshBusinessDay();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const historyTotalPages = Math.max(1, Math.ceil(historyTotal / HISTORY_PAGE_SIZE));
 
   async function checkout() {
     if (!canPay || !ensureDayOpen()) return;
@@ -773,48 +827,96 @@ export default function MovementsPage() {
         <section className="dash-section">
           <Panel
             title="Historial de movimientos"
-            action={<span className="badge">{movements.length} registros</span>}
+            action={<span className="badge">{historyTotal} registros</span>}
             className="table-panel movements-panel"
           >
             {movements.length ? (
-              <div className="table-wrap">
-                <table className="table-erp">
-                  <thead>
-                    <tr>
-                      <th>Producto</th>
-                      <th>Tipo</th>
-                      <th>Cantidad</th>
-                      <th>Nota / observación</th>
-                      <th>Fecha</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {movements.map((m) => {
-                      const product = byId[m.product_id];
-                      return (
-                        <tr key={m.id}>
-                          <td>
-                            <strong>{product?.name || "—"}</strong>
-                            {product && !product.is_active && (
-                              <div className="muted tiny">Producto inactivo</div>
-                            )}
-                          </td>
-                          <td>
-                            <span className={`pill ${m.movement_type}`}>
-                              {movementTypeLabel(m.movement_type)}
-                            </span>
-                          </td>
-                          <td><strong>{m.quantity}</strong></td>
-                          <td className="movement-note-td">
-                            <MovementNoteCell note={m.note} />
-                          </td>
-                          <td>{new Date(m.created_at).toLocaleString("es-CO")}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                <div className="table-wrap">
+                  <table className="table-erp">
+                    <thead>
+                      <tr>
+                        <th>Producto</th>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
+                        <th>Nota / observación</th>
+                        <th>Fecha</th>
+                        <th className="cell-actions-menu"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {movements.map((m) => {
+                        const product = byId[m.product_id];
+                        const reverted = Boolean(m.reverted_at);
+                        return (
+                          <tr key={m.id} className={reverted ? "row-inactive" : ""}>
+                            <td>
+                              <strong>{product?.name || "—"}</strong>
+                              {product && !product.is_active && (
+                                <div className="muted tiny">Producto inactivo</div>
+                              )}
+                            </td>
+                            <td>
+                              <span className={`pill ${m.movement_type}`}>
+                                {movementTypeLabel(m.movement_type)}
+                              </span>
+                              {reverted && (
+                                <div>
+                                  <span className="badge inactive">Revertido</span>
+                                </div>
+                              )}
+                            </td>
+                            <td><strong>{m.quantity}</strong></td>
+                            <td className="movement-note-td">
+                              <MovementNoteCell note={m.note} />
+                            </td>
+                            <td>{new Date(m.created_at).toLocaleString("es-CO")}</td>
+                            <td className="cell-actions-menu">
+                              {!reverted ? (
+                                <TableRowMenu
+                                  label={`Opciones del movimiento de ${product?.name || "producto"}`}
+                                  items={[
+                                    {
+                                      id: "revert",
+                                      label: "Revertir movimiento",
+                                      icon: RowMenuIcons.return,
+                                      danger: true,
+                                      onClick: () => onRevertMovement(m),
+                                    },
+                                  ]}
+                                />
+                              ) : null}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="table-pagination">
+                  <span className="muted table-pagination-meta">
+                    Página {historyPage} de {historyTotalPages} · {historyTotal} registros
+                  </span>
+                  <div className="table-pagination-actions">
+                    <button
+                      type="button"
+                      className="btn-ghost btn-sm"
+                      disabled={historyPage <= 1 || busy}
+                      onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                    >
+                      Anterior
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-ghost btn-sm"
+                      disabled={historyPage >= historyTotalPages || busy}
+                      onClick={() => setHistoryPage((p) => p + 1)}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                </div>
+              </>
             ) : (
               <EmptyState
                 title="Sin movimientos"

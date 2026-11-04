@@ -68,7 +68,19 @@ export const api = {
   listCategories: (token) => request("/api/categories", { token }),
   createCategory: (token, payload) =>
     request("/api/categories", { method: "POST", body: payload, token }),
-  listMovements: (token) => request("/api/movements", { token }),
+  listMovements: (token, params = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set("page", String(params.page));
+    if (params.page_size) q.set("page_size", String(params.page_size));
+    const qs = q.toString();
+    return request(`/api/movements${qs ? `?${qs}` : ""}`, { token });
+  },
+  revertMovement: (token, movementId) =>
+    request(`/api/movements/${movementId}/revert`, {
+      method: "POST",
+      token,
+      clientDate: clientLocalDate(),
+    }),
   createMovement: (token, payload) =>
     request("/api/movements", {
       method: "POST",
