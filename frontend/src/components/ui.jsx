@@ -295,27 +295,38 @@ export function Alert({ type = "error", children }) {
   return <div className={`alert ${cls}`}>{children}</div>;
 }
 
-export function Modal({ open, title, subtitle, onClose, children, wide = false }) {
+export function Modal({
+  open,
+  title,
+  subtitle,
+  onClose,
+  children,
+  wide = false,
+  className = "",
+  hideHeader = false,
+}) {
   if (!open) return null;
   return (
     <div className="modal-overlay" onClick={onClose} role="presentation">
       <div
-        className={`modal-card ${wide ? "modal-wide" : ""}`}
+        className={`modal-card ${wide ? "modal-wide" : ""} ${className}`.trim()}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        aria-labelledby={hideHeader ? undefined : "modal-title"}
       >
-        <div className="modal-head">
-          <div>
-            <h2 id="modal-title">{title}</h2>
-            {subtitle && <p>{subtitle}</p>}
+        {!hideHeader && (
+          <div className="modal-head">
+            <div>
+              <h2 id="modal-title">{title}</h2>
+              {subtitle && <p>{subtitle}</p>}
+            </div>
+            <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">
+              ×
+            </button>
           </div>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">
-            ×
-          </button>
-        </div>
-        <div className="modal-body">{children}</div>
+        )}
+        <div className={`modal-body ${hideHeader ? "modal-body-flush" : ""}`}>{children}</div>
       </div>
     </div>
   );

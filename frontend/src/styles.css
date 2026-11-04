@@ -1004,6 +1004,9 @@ tbody tr:hover { background: #f8fafc; }
 .modal-body {
   padding: 0.25rem 0 0.5rem;
 }
+.modal-body.modal-body-flush {
+  padding: 0;
+}
 .modal-form.form-card {
   border: 0;
   box-shadow: none;
@@ -1060,23 +1063,12 @@ tbody tr:hover { background: #f8fafc; }
   border: 2px solid rgba(255, 255, 255, 0.85);
 }
 
-.day-ops-modal-body {
-  display: grid;
-  gap: 1rem;
-}
-
 .day-ops-modal-lead {
   margin: 0;
   font-weight: 500;
   color: var(--muted);
   line-height: 1.55;
-}
-
-.day-ops-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: flex-end;
+  font-size: 0.9rem;
 }
 
 .profile-layout {
