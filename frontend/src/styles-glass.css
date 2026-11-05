@@ -1241,6 +1241,15 @@ textarea:focus {
   margin: 0;
 }
 
+.credit-payments-table-wrap {
+  margin-bottom: 0.5rem;
+}
+
+.credit-detail-panel .table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
 @media (max-width: 960px) {
   .credit-layout {
     grid-template-columns: 1fr;

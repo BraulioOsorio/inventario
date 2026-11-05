@@ -12,6 +12,7 @@ from app.schemas.dtos import (
     CreditChargeCreate,
     CreditPaymentCreate,
     CreditSummaryOut,
+    CreditPaymentUpdate,
 )
 from app.services.business_day_service import BusinessDayService
 from app.services.credit_service import CreditService
@@ -85,3 +86,14 @@ def pay_credit(
     db: Session = Depends(get_db),
 ):
     return CreditService(db).register_payment(user, account_id, payload)
+
+
+@router.put("/{account_id}/payments/{payment_id}", response_model=CreditAccountOut)
+def update_credit_payment(
+    account_id: UUID,
+    payment_id: UUID,
+    payload: CreditPaymentUpdate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return CreditService(db).update_payment(user, account_id, payment_id, payload)

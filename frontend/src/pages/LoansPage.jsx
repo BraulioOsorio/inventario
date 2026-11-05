@@ -15,6 +15,8 @@ import {
   Modal,
   PageHeader,
   Panel,
+  RowMenuIcons,
+  TableRowMenu,
 } from "../components/ui";
 
 const fmt = (n) =>
@@ -55,7 +57,10 @@ export default function LoansPage() {
   const [linesPage, setLinesPage] = useState(1);
   const [paymentsPage, setPaymentsPage] = useState(1);
   const [payOpen, setPayOpen] = useState(false);
+  const [editPayOpen, setEditPayOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null);
   const [payForm, setPayForm] = useState({ amount: "", notes: "", payment_method_id: "" });
+  const [editPayForm, setEditPayForm] = useState({ amount: "", notes: "", payment_method_id: "" });
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [detailNotes, setDetailNotes] = useState("");
   const [detailDueDate, setDetailDueDate] = useState("");
@@ -168,6 +173,16 @@ export default function LoansPage() {
     setPayOpen(true);
   }
 
+  function openEditPayment(payment) {
+    setEditingPayment(payment);
+    setEditPayForm({
+      amount: String(payment.amount ?? ""),
+      notes: payment.notes || "",
+      payment_method_id: payment.payment_method_id || defaultPaymentMethodId,
+    });
+    setEditPayOpen(true);
+  }
+
   async function saveAccountMeta(e) {
     e.preventDefault();
     if (!detail) return;
@@ -186,6 +201,31 @@ export default function LoansPage() {
       setError(err.message);
     } finally {
       setSavingMeta(false);
+    }
+  }
+
+  async function submitEditPay(e) {
+    e.preventDefault();
+    if (!detail || !editingPayment) return;
+    setBusy(true);
+    setError("");
+    try {
+      const updated = await api.updateCreditPayment(token, detail.id, editingPayment.id, {
+        amount: Number(editPayForm.amount),
+        payment_method_id: editPayForm.payment_method_id,
+        notes: editPayForm.notes.trim() || null,
+      });
+      setOk("Abono actualizado.");
+      setEditPayOpen(false);
+      setEditingPayment(null);
+      setDetail(updated);
+      setDetailNotes(updated.notes || "");
+      setSelectedId(updated.id);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -432,18 +472,45 @@ export default function LoansPage() {
               <h3 className="h3-panel">Abonos</h3>
               {payments.length ? (
                 <>
-                  <ul className="alert-preview-list credit-payments-list">
-                    {pagedPayments.map((p) => (
-                      <li key={p.id} className="alert-preview-item">
-                        <strong>{fmt(p.amount)}</strong>
-                        <span className="muted tiny">
-                          {new Date(p.created_at).toLocaleString("es-CO")}
-                          {p.payment_method_name ? ` · ${p.payment_method_name}` : ""}
-                          {p.notes ? ` · ${p.notes}` : ""}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="table-wrap credit-payments-table-wrap">
+                    <table className="table-erp">
+                      <thead>
+                        <tr>
+                          <th>Monto</th>
+                          <th>Forma de pago</th>
+                          <th>Fecha</th>
+                          <th>Nota</th>
+                          <th className="cell-actions-menu"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pagedPayments.map((p) => (
+                          <tr key={p.id}>
+                            <td>
+                              <strong>{fmt(p.amount)}</strong>
+                            </td>
+                            <td>{p.payment_method_name || "Sin asignar"}</td>
+                            <td>{new Date(p.created_at).toLocaleString("es-CO")}</td>
+                            <td className="muted">{p.notes || "—"}</td>
+                            <td className="cell-actions-menu">
+                              <TableRowMenu
+                                label={`Opciones del abono ${fmt(p.amount)}`}
+                                items={[
+                                  {
+                                    id: "edit",
+                                    label: "Editar abono",
+                                    icon: RowMenuIcons.edit,
+                                    primary: true,
+                                    onClick: () => openEditPayment(p),
+                                  },
+                                ]}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <TablePagination
                     page={paymentsPage}
                     totalPages={paymentsTotalPages}
@@ -504,6 +571,68 @@ export default function LoansPage() {
             </button>
             <button type="submit" className="btn-primary" disabled={busy || !payForm.payment_method_id}>
               {busy ? "Guardando…" : "Confirmar abono"}
+            </button>
+          </FormActions>
+        </FormCard>
+      </Modal>
+
+      <Modal
+        open={editPayOpen}
+        title="Editar abono"
+        subtitle={detail ? detail.customer_name : ""}
+        onClose={() => {
+          setEditPayOpen(false);
+          setEditingPayment(null);
+        }}
+      >
+        <FormCard onSubmit={submitEditPay} bare className="glass-form modal-form">
+          <div className="form-card-body">
+            <FormRow cols={2}>
+              <FormField label="Monto del abono" required>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={editPayForm.amount}
+                  onChange={(e) => setEditPayForm({ ...editPayForm, amount: e.target.value })}
+                />
+              </FormField>
+              <FormField label="Forma de pago" required>
+                <select
+                  required
+                  value={editPayForm.payment_method_id}
+                  onChange={(e) => setEditPayForm({ ...editPayForm, payment_method_id: e.target.value })}
+                >
+                  {!paymentMethods.length && <option value="">Cargando…</option>}
+                  {paymentMethods.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </FormRow>
+            <FormField label="Nota del abono">
+              <input
+                value={editPayForm.notes}
+                onChange={(e) => setEditPayForm({ ...editPayForm, notes: e.target.value })}
+                placeholder="Opcional: referencia, comprobante…"
+              />
+            </FormField>
+          </div>
+          <FormActions>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setEditPayOpen(false);
+                setEditingPayment(null);
+              }}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className="btn-primary" disabled={busy || !editPayForm.payment_method_id}>
+              {busy ? "Guardando…" : "Guardar cambios"}
             </button>
           </FormActions>
         </FormCard>

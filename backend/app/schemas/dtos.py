@@ -403,6 +403,12 @@ class CreditPaymentCreate(BaseModel):
     notes: str | None = None
 
 
+class CreditPaymentUpdate(BaseModel):
+    amount: float = Field(gt=0)
+    payment_method_id: UUID
+    notes: str | None = None
+
+
 class CreditAccountUpdate(BaseModel):
     notes: str | None = None
     due_date: datetime | None = None

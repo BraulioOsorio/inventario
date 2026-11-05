@@ -72,3 +72,12 @@ class CreditRepository:
         self.db.add(payment)
         self.db.flush()
         return payment
+
+    def get_payment(self, payment_id: UUID, owner_id: UUID) -> CreditPayment | None:
+        return (
+            self.db.query(CreditPayment)
+            .join(CreditAccount, CreditPayment.account_id == CreditAccount.id)
+            .options(joinedload(CreditPayment.payment_method))
+            .filter(CreditPayment.id == payment_id, CreditAccount.owner_id == owner_id)
+            .first()
+        )

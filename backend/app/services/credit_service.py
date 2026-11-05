@@ -17,6 +17,7 @@ from app.schemas.dtos import (
     CreditLineOut,
     CreditPaymentCreate,
     CreditPaymentOut,
+    CreditPaymentUpdate,
     CreditSummaryOut,
 )
 
@@ -29,6 +30,31 @@ class CreditService:
         self.products = ProductRepository(db)
         self.movements = MovementRepository(db)
         self.payment_methods = PaymentMethodRepository(db)
+
+    @staticmethod
+    def _recalc_account_balance(account) -> None:
+        charged = round(sum(float(line.line_total) for line in account.lines or []), 2)
+        paid = round(sum(float(payment.amount) for payment in account.payments or []), 2)
+        if paid > charged + 0.01:
+            raise HTTPException(
+                status_code=400,
+                detail=f"La suma de abonos (${paid:,.0f}) supera el total fiado (${charged:,.0f})",
+            )
+        account.balance_due = round(max(0, charged - paid), 2)
+        if account.balance_due <= 0:
+            account.status = "saldado"
+            account.balance_due = 0
+        else:
+            account.status = "activo"
+
+    def _resolve_payment_method(self, user: User, method_id: UUID):
+        method = self.payment_methods.get(method_id, user.id)
+        if not method:
+            PaymentMethodService(self.db).ensure_defaults(user)
+            method = self.payment_methods.get(method_id, user.id)
+        if not method:
+            raise HTTPException(status_code=400, detail="Forma de pago no válida")
+        return method
 
     def _to_out(self, account, now: datetime, include_details: bool = False) -> CreditAccountOut:
         out = CreditAccountOut.model_validate(account)
@@ -208,12 +234,7 @@ class CreditService:
                 detail=f"El abono supera la deuda (${balance:,.0f} pendientes)",
             )
 
-        method = self.payment_methods.get(payload.payment_method_id, user.id)
-        if not method:
-            PaymentMethodService(self.db).ensure_defaults(user)
-            method = self.payment_methods.get(payload.payment_method_id, user.id)
-        if not method:
-            raise HTTPException(status_code=400, detail="Forma de pago no válida")
+        method = self._resolve_payment_method(user, payload.payment_method_id)
 
         self.credits.add_payment(
             account.id,
@@ -221,10 +242,37 @@ class CreditService:
             notes=payload.notes,
             payment_method_id=method.id,
         )
-        account.balance_due = round(max(0, balance - amount), 2)
-        if account.balance_due <= 0:
-            account.status = "saldado"
-            account.balance_due = 0
+        refreshed = self.credits.get(account.id, user.id)
+        self._recalc_account_balance(refreshed)
+
+        self.db.commit()
+        refreshed = self.credits.get(account.id, user.id)
+        now = datetime.now(timezone.utc)
+        return self._to_out(refreshed, now, include_details=True)
+
+    def update_payment(
+        self,
+        user: User,
+        account_id: UUID,
+        payment_id: UUID,
+        payload: CreditPaymentUpdate,
+    ) -> CreditAccountOut:
+        account = self.credits.get(account_id, user.id)
+        if not account:
+            raise HTTPException(status_code=404, detail="Cuenta de crédito no encontrada")
+
+        payment = self.credits.get_payment(payment_id, user.id)
+        if not payment or payment.account_id != account.id:
+            raise HTTPException(status_code=404, detail="Abono no encontrado")
+
+        method = self._resolve_payment_method(user, payload.payment_method_id)
+        payment.amount = round(float(payload.amount), 2)
+        payment.payment_method_id = method.id
+        if payload.notes is not None:
+            payment.notes = payload.notes.strip() or None
+
+        refreshed = self.credits.get(account.id, user.id)
+        self._recalc_account_balance(refreshed)
 
         self.db.commit()
         refreshed = self.credits.get(account.id, user.id)

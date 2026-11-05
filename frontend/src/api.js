@@ -179,6 +179,12 @@ export const api = {
     }),
   payCredit: (token, id, payload) =>
     request(`/api/credit-accounts/${id}/payments`, { method: "POST", body: payload, token }),
+  updateCreditPayment: (token, accountId, paymentId, payload) =>
+    request(`/api/credit-accounts/${accountId}/payments/${paymentId}`, {
+      method: "PUT",
+      body: payload,
+      token,
+    }),
   listPaymentMethods: (token) => request("/api/payment-methods", { token }),
   createPaymentMethod: (token, payload) =>
     request("/api/payment-methods", { method: "POST", body: payload, token }),
