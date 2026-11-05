@@ -60,11 +60,55 @@ class CreditService:
             account.status = "activo"
 
     def _sync_all_balances(self, owner_id: UUID) -> None:
+        self._repair_reverted_credit_lines(owner_id)
         accounts = self.credits.list_all_with_ledger(owner_id)
         for account in accounts:
             self._recalc_account_balance(account, strict=False)
         self.db.commit()
         self.db.expire_all()
+
+    def _repair_reverted_credit_lines(self, owner_id: UUID) -> None:
+        """Quita fiados huérfanos cuyo movimiento ya figura Revertido en historial."""
+        movements = self.movements.list_reverted_credit_outs(owner_id)
+        for movement in movements:
+            self._remove_credit_line_for_movement(owner_id, movement, block_on_payments=False)
+
+    def _remove_credit_line_for_movement(
+        self,
+        owner_id: UUID,
+        movement,
+        *,
+        block_on_payments: bool,
+    ) -> bool:
+        line = self.credits.get_line_by_movement(movement.id, owner_id)
+        if not line:
+            line = self.credits.find_legacy_line_for_movement(owner_id, movement)
+            if line and line.movement_id is None:
+                line.movement_id = movement.id
+        if not line:
+            return False
+
+        account = self.credits.get(line.account_id, owner_id)
+        if not account:
+            return False
+
+        charged = round(sum(float(ln.line_total) for ln in account.lines or []), 2)
+        paid = round(sum(float(p.amount) for p in account.payments or []), 2)
+        charged_after = round(charged - float(line.line_total), 2)
+        if paid > charged_after + 0.01:
+            if block_on_payments:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "No se puede revertir este crédito: ya hay abonos registrados que superan "
+                        "la deuda si se quita este producto fiado. Ajusta o elimina abonos en Créditos."
+                    ),
+                )
+            return False
+
+        self.credits.delete_line(line)
+        self.db.flush()
+        return True
 
     def _resolve_payment_method(self, user: User, method_id: UUID):
         method = self.payment_methods.get(method_id, user.id)
@@ -277,35 +321,10 @@ class CreditService:
 
     def revert_line_for_movement(self, user: User, movement) -> bool:
         """Elimina la línea de crédito ligada al movimiento. Devuelve True si aplicó."""
-        line = self.credits.get_line_by_movement(movement.id, user.id)
-        if not line:
-            line = self.credits.find_legacy_line_for_movement(user.id, movement)
-            if line:
-                line.movement_id = movement.id
-        if not line:
+        if not movement.note or not str(movement.note).startswith("Crédito ·"):
             return False
-
-        account = self.credits.get(line.account_id, user.id)
-        if not account:
-            return False
-
-        charged = round(sum(float(ln.line_total) for ln in account.lines or []), 2)
-        paid = round(sum(float(p.amount) for p in account.payments or []), 2)
-        charged_after = round(charged - float(line.line_total), 2)
-        if paid > charged_after + 0.01:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "No se puede revertir este crédito: ya hay abonos registrados que superan "
-                    "la deuda si se quita este producto fiado. Ajusta o elimina abonos en Créditos."
-                ),
-            )
-
-        self.credits.delete_line(line)
-        self.db.flush()
-        refreshed = self.credits.get(account.id, user.id)
-        self._recalc_account_balance(refreshed, strict=False)
-        return True
+        removed = self._remove_credit_line_for_movement(user.id, movement, block_on_payments=True)
+        return removed
 
     def register_payment(self, user: User, account_id: UUID, payload: CreditPaymentCreate) -> CreditAccountOut:
         account = self.credits.get(account_id, user.id)

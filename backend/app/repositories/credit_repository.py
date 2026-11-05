@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.entities import CreditAccount, CreditLine, CreditPayment
+from app.models.entities import CreditAccount, CreditLine, CreditPayment, Customer
 
 
 class CreditRepository:
@@ -97,11 +97,23 @@ class CreditRepository:
             return None
         from datetime import timedelta
 
-        window_start = movement.created_at - timedelta(minutes=5)
-        window_end = movement.created_at + timedelta(minutes=5)
-        candidates = (
+        parts = [p.strip() for p in str(movement.note).split("·")]
+        customer_hint = parts[1] if len(parts) >= 2 else None
+        mov_total = None
+        if len(parts) >= 3:
+            raw = parts[-1].strip().replace(".", "").replace(",", ".")
+            try:
+                mov_total = float(raw)
+            except ValueError:
+                mov_total = None
+
+        window_start = movement.created_at - timedelta(days=7)
+        window_end = movement.created_at + timedelta(days=1)
+
+        query = (
             self.db.query(CreditLine)
             .join(CreditAccount, CreditLine.account_id == CreditAccount.id)
+            .join(Customer, CreditAccount.customer_id == Customer.id)
             .filter(
                 CreditAccount.owner_id == owner_id,
                 CreditLine.product_id == movement.product_id,
@@ -110,21 +122,18 @@ class CreditRepository:
                 CreditLine.created_at >= window_start,
                 CreditLine.created_at <= window_end,
             )
-            .all()
         )
+        if customer_hint:
+            query = query.filter(Customer.full_name.ilike(customer_hint))
+
+        candidates = query.all()
         if len(candidates) == 1:
             return candidates[0]
-        mov_total = None
-        parts = str(movement.note).split("·")
-        if len(parts) >= 3:
-            raw = parts[-1].strip().replace(".", "").replace(",", ".")
-            try:
-                mov_total = float(raw)
-            except ValueError:
-                mov_total = None
         for line in candidates:
             if mov_total is not None and abs(float(line.line_total) - mov_total) < 0.02:
                 return line
+        if len(candidates) == 1:
+            return candidates[0]
         return None
 
     def delete_line(self, line: CreditLine) -> None:

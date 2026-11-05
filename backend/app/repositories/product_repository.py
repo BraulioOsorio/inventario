@@ -97,6 +97,20 @@ class MovementRepository:
             .first()
         )
 
+    def list_reverted_credit_outs(self, owner_id: UUID) -> list[StockMovement]:
+        return (
+            self.db.query(StockMovement)
+            .filter(
+                StockMovement.owner_id == owner_id,
+                StockMovement.movement_type == "out",
+                StockMovement.reverted_at.isnot(None),
+                StockMovement.note.isnot(None),
+                StockMovement.note.like("Crédito ·%"),
+            )
+            .order_by(StockMovement.created_at.desc())
+            .all()
+        )
+
     def create(
         self,
         owner_id: UUID,
