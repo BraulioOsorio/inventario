@@ -132,8 +132,6 @@ class CreditRepository:
         for line in candidates:
             if mov_total is not None and abs(float(line.line_total) - mov_total) < 0.02:
                 return line
-        if len(candidates) == 1:
-            return candidates[0]
         return None
 
     def delete_line(self, line: CreditLine) -> None:
