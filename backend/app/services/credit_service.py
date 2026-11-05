@@ -32,20 +32,36 @@ class CreditService:
         self.payment_methods = PaymentMethodRepository(db)
 
     @staticmethod
-    def _recalc_account_balance(account) -> None:
+    def _recalc_account_balance(account, *, strict: bool = True) -> None:
         charged = round(sum(float(line.line_total) for line in account.lines or []), 2)
         paid = round(sum(float(payment.amount) for payment in account.payments or []), 2)
         if paid > charged + 0.01:
-            raise HTTPException(
-                status_code=400,
-                detail=f"La suma de abonos (${paid:,.0f}) supera el total fiado (${charged:,.0f})",
-            )
+            if strict:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"La suma de abonos (${paid:,.0f}) supera el total fiado (${charged:,.0f})",
+                )
+            account.balance_due = 0
+            account.status = "saldado"
+            return
         account.balance_due = round(max(0, charged - paid), 2)
         if account.balance_due <= 0:
             account.status = "saldado"
             account.balance_due = 0
         else:
             account.status = "activo"
+
+    def _sync_all_balances(self, owner_id: UUID) -> None:
+        accounts = self.credits.list_all_with_ledger(owner_id)
+        dirty = False
+        for account in accounts:
+            before = (float(account.balance_due or 0), account.status)
+            self._recalc_account_balance(account, strict=False)
+            after = (float(account.balance_due or 0), account.status)
+            if before != after:
+                dirty = True
+        if dirty:
+            self.db.commit()
 
     def _resolve_payment_method(self, user: User, method_id: UUID):
         method = self.payment_methods.get(method_id, user.id)
@@ -100,13 +116,15 @@ class CreditService:
         return out
 
     def list_accounts(self, user: User, status: str | None = None) -> list[CreditAccountOut]:
+        self._sync_all_balances(user.id)
         now = datetime.now(timezone.utc)
         accounts = self.credits.list_by_owner(user.id, status=status)
         return [self._to_out(a, now) for a in accounts]
 
     def summary(self, user: User) -> CreditSummaryOut:
+        self._sync_all_balances(user.id)
         now = datetime.now(timezone.utc)
-        accounts = self.credits.list_by_owner(user.id, status="activo")
+        accounts = self.credits.list_by_owner(user.id)
         with_debt = [a for a in accounts if float(a.balance_due or 0) > 0.009]
         total = round(sum(float(a.balance_due) for a in with_debt), 2)
         overdue = 0
@@ -144,6 +162,9 @@ class CreditService:
         account = self.credits.get(account_id, user.id)
         if not account:
             raise HTTPException(status_code=404, detail="Cuenta de crédito no encontrada")
+        self._recalc_account_balance(account, strict=False)
+        self.db.commit()
+        account = self.credits.get(account_id, user.id)
         now = datetime.now(timezone.utc)
         return self._to_out(account, now, include_details=True)
 
@@ -214,6 +235,9 @@ class CreditService:
 
         account.balance_due = round(float(account.balance_due) + charge_total, 2)
         account.status = "activo"
+        self.db.commit()
+        refreshed = self.credits.get(account.id, user.id)
+        self._recalc_account_balance(refreshed)
         self.db.commit()
         refreshed = self.credits.get(account.id, user.id)
         now = datetime.now(timezone.utc)

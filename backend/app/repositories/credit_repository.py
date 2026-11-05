@@ -22,6 +22,17 @@ class CreditRepository:
             query = query.filter(CreditAccount.status == status)
         return query.order_by(CreditAccount.updated_at.desc()).all()
 
+    def list_all_with_ledger(self, owner_id: UUID) -> list[CreditAccount]:
+        return (
+            self.db.query(CreditAccount)
+            .options(
+                joinedload(CreditAccount.lines),
+                joinedload(CreditAccount.payments),
+            )
+            .filter(CreditAccount.owner_id == owner_id)
+            .all()
+        )
+
     def get_for_customer(self, owner_id: UUID, customer_id: UUID) -> CreditAccount | None:
         return (
             self.db.query(CreditAccount)
