@@ -47,7 +47,6 @@ function TablePagination({ page, totalPages, total, label, onPrev, onNext, disab
 export default function LoansPage() {
   const { token } = useAuth();
   const [accounts, setAccounts] = useState([]);
-  const [summary, setSummary] = useState({ active_count: 0, total_debt: 0, overdue_count: 0 });
   const [statusFilter, setStatusFilter] = useState("");
   const [clientSearch, setClientSearch] = useState("");
   const debouncedSearch = useDebouncedValue(clientSearch);
@@ -72,9 +71,7 @@ export default function LoansPage() {
   async function load() {
     try {
       const data = await api.listCreditAccounts(token, { status: statusFilter || undefined });
-      const sum = await api.creditAccountsSummary(token);
       setAccounts(data);
-      setSummary(sum || { active_count: 0, total_debt: 0, overdue_count: 0 });
     } catch (err) {
       setError(err.message);
     }
@@ -121,14 +118,12 @@ export default function LoansPage() {
       .finally(() => setBusy(false));
   }, [selectedId, token]);
 
-  const kpis = useMemo(
-    () => ({
-      active: summary.active_count ?? 0,
-      debt: summary.total_debt ?? 0,
-      overdue: summary.overdue_count ?? 0,
-    }),
-    [summary]
-  );
+  const kpis = useMemo(() => {
+    const withDebt = accounts.filter((a) => Number(a.balance_due || 0) > 0.009);
+    const debt = withDebt.reduce((s, a) => s + Number(a.balance_due || 0), 0);
+    const overdue = withDebt.filter((a) => a.is_overdue).length;
+    return { active: withDebt.length, debt, overdue };
+  }, [accounts]);
 
   const filteredAccounts = useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
@@ -154,6 +149,14 @@ export default function LoansPage() {
   const pagedPayments = payments.slice(
     (paymentsPage - 1) * DETAIL_PAGE_SIZE,
     paymentsPage * DETAIL_PAGE_SIZE
+  );
+
+  const listDebtSum = useMemo(
+    () =>
+      filteredAccounts
+        .filter((a) => Number(a.balance_due || 0) > 0.009)
+        .reduce((s, a) => s + Number(a.balance_due || 0), 0),
+    [filteredAccounts]
   );
 
   function selectAccount(id) {
@@ -256,15 +259,15 @@ export default function LoansPage() {
       <PageHeader
         kicker="Operaciones"
         title="Créditos de clientes"
-        subtitle="Deuda total = suma de lo fiado menos abonos por cuenta. Editar un abono de una cuenta ya saldada ($ 0) no cambia el total."
+        subtitle="La deuda total es la suma de la columna Debe (fiado − abonos). Quien está en $ 0 · Saldada, como Suegra, no suma."
       />
 
       {error && <Alert type="error">{error}</Alert>}
       {ok && <Alert type="success">{ok}</Alert>}
 
       <section className="dash-section kpi-grid">
-        <KpiCard label="Cuentas activas" value={kpis.active} hint="Con saldo pendiente" />
-        <KpiCard label="Deuda total" value={fmt(kpis.debt)} hint="Suma de cuentas activas" tone="warn" />
+        <KpiCard label="Cuentas activas" value={kpis.active} hint="Con saldo > $ 0 en la lista" />
+        <KpiCard label="Deuda total" value={fmt(kpis.debt)} hint="Igual a sumar columna Debe (todas las páginas)" tone="warn" />
         <KpiCard label="Vencidas" value={kpis.overdue} hint="Pasaron fecha límite" tone={kpis.overdue ? "warn" : "normal"} />
       </section>
 
@@ -294,7 +297,11 @@ export default function LoansPage() {
         <Panel
           title="Cuentas de crédito"
           className="table-panel glass-panel credit-list-panel"
-          action={<span className="badge">{filteredAccounts.length} cuentas</span>}
+          action={
+            <span className="badge">
+              {filteredAccounts.length} cuentas · Suma Debe {fmt(listDebtSum)}
+            </span>
+          }
         >
           {filteredAccounts.length ? (
             <>
