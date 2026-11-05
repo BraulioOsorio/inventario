@@ -1213,6 +1213,30 @@ textarea:focus {
   padding: 0.15rem 0 0.5rem;
 }
 
+.inline-edit-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inline-edit-form input {
+  flex: 1 1 10rem;
+  min-width: 8rem;
+}
+
+.credit-meta-form {
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(51, 65, 85, 0.12);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.credit-meta-hint {
+  margin: 0 0 0.65rem;
+}
+
 .credit-payments-list {
   margin: 0;
 }

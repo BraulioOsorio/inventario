@@ -111,6 +111,28 @@ def migrate_schema() -> None:
                 """
             )
         )
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS payment_methods (
+                    id UUID PRIMARY KEY,
+                    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    name VARCHAR(80) NOT NULL,
+                    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    CONSTRAINT uq_payment_method_owner_name UNIQUE (owner_id, name)
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                ALTER TABLE credit_payments
+                ADD COLUMN IF NOT EXISTS payment_method_id UUID REFERENCES payment_methods(id)
+                """
+            )
+        )
 
 
 def seed_admin() -> None:

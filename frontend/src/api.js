@@ -166,7 +166,10 @@ export const api = {
     const qs = q.toString();
     return request(`/api/credit-accounts${qs ? `?${qs}` : ""}`, { token });
   },
+  creditAccountsSummary: (token) => request("/api/credit-accounts/summary", { token }),
   getCreditAccount: (token, id) => request(`/api/credit-accounts/${id}`, { token }),
+  updateCreditAccount: (token, id, payload) =>
+    request(`/api/credit-accounts/${id}`, { method: "PUT", body: payload, token }),
   chargeCredit: (token, payload) =>
     request("/api/credit-accounts/charge", {
       method: "POST",
@@ -176,6 +179,13 @@ export const api = {
     }),
   payCredit: (token, id, payload) =>
     request(`/api/credit-accounts/${id}/payments`, { method: "POST", body: payload, token }),
+  listPaymentMethods: (token) => request("/api/payment-methods", { token }),
+  createPaymentMethod: (token, payload) =>
+    request("/api/payment-methods", { method: "POST", body: payload, token }),
+  updatePaymentMethod: (token, id, payload) =>
+    request(`/api/payment-methods/${id}`, { method: "PUT", body: payload, token }),
+  deletePaymentMethod: (token, id) =>
+    request(`/api/payment-methods/${id}`, { method: "DELETE", token }),
   // Notificaciones / Campanita
   getNotifications: (token) =>
     request("/api/notifications", { token }),

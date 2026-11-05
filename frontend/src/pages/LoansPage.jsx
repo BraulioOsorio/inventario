@@ -15,8 +15,6 @@ import {
   Modal,
   PageHeader,
   Panel,
-  RowMenuIcons,
-  TableRowMenu,
 } from "../components/ui";
 
 const fmt = (n) =>
@@ -47,7 +45,8 @@ function TablePagination({ page, totalPages, total, label, onPrev, onNext, disab
 export default function LoansPage() {
   const { token } = useAuth();
   const [accounts, setAccounts] = useState([]);
-  const [statusFilter, setStatusFilter] = useState("activo");
+  const [summary, setSummary] = useState({ active_count: 0, total_debt: 0, overdue_count: 0 });
+  const [statusFilter, setStatusFilter] = useState("");
   const [clientSearch, setClientSearch] = useState("");
   const debouncedSearch = useDebouncedValue(clientSearch);
   const [listPage, setListPage] = useState(1);
@@ -56,17 +55,23 @@ export default function LoansPage() {
   const [linesPage, setLinesPage] = useState(1);
   const [paymentsPage, setPaymentsPage] = useState(1);
   const [payOpen, setPayOpen] = useState(false);
-  const [payForm, setPayForm] = useState({ amount: "", notes: "" });
+  const [payForm, setPayForm] = useState({ amount: "", notes: "", payment_method_id: "" });
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [detailNotes, setDetailNotes] = useState("");
+  const [detailDueDate, setDetailDueDate] = useState("");
+  const [savingMeta, setSavingMeta] = useState(false);
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function load() {
     try {
-      const data = await api.listCreditAccounts(token, {
-        status: statusFilter || undefined,
-      });
+      const [data, sum] = await Promise.all([
+        api.listCreditAccounts(token, { status: statusFilter || undefined }),
+        api.creditAccountsSummary(token),
+      ]);
       setAccounts(data);
+      setSummary(sum || { active_count: 0, total_debt: 0, overdue_count: 0 });
     } catch (err) {
       setError(err.message);
     }
@@ -76,6 +81,19 @@ export default function LoansPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, statusFilter]);
+
+  useEffect(() => {
+    if (!token) return;
+    api
+      .listPaymentMethods(token)
+      .then(setPaymentMethods)
+      .catch(() => setPaymentMethods([]));
+  }, [token]);
+
+  const defaultPaymentMethodId = useMemo(() => {
+    const efectivo = paymentMethods.find((m) => m.name === "Efectivo");
+    return efectivo?.id || paymentMethods[0]?.id || "";
+  }, [paymentMethods]);
 
   useEffect(() => {
     setListPage(1);
@@ -91,6 +109,8 @@ export default function LoansPage() {
       .getCreditAccount(token, selectedId)
       .then((data) => {
         setDetail(data);
+        setDetailNotes(data.notes || "");
+        setDetailDueDate(data.due_date ? data.due_date.slice(0, 10) : "");
         setLinesPage(1);
         setPaymentsPage(1);
       })
@@ -98,12 +118,14 @@ export default function LoansPage() {
       .finally(() => setBusy(false));
   }, [selectedId, token]);
 
-  const kpis = useMemo(() => {
-    const active = accounts.filter((a) => a.status === "activo");
-    const debt = active.reduce((s, a) => s + Number(a.balance_due || 0), 0);
-    const overdue = active.filter((a) => a.is_overdue).length;
-    return { active: active.length, debt, overdue };
-  }, [accounts]);
+  const kpis = useMemo(
+    () => ({
+      active: summary.active_count ?? 0,
+      debt: summary.total_debt ?? 0,
+      overdue: summary.overdue_count ?? 0,
+    }),
+    [summary]
+  );
 
   const filteredAccounts = useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
@@ -138,8 +160,33 @@ export default function LoansPage() {
 
   function openPay(account) {
     setDetail(account);
-    setPayForm({ amount: String(account.balance_due || ""), notes: "" });
+    setPayForm({
+      amount: String(account.balance_due || ""),
+      notes: "",
+      payment_method_id: defaultPaymentMethodId,
+    });
     setPayOpen(true);
+  }
+
+  async function saveAccountMeta(e) {
+    e.preventDefault();
+    if (!detail) return;
+    setSavingMeta(true);
+    setError("");
+    try {
+      const updated = await api.updateCreditAccount(token, detail.id, {
+        notes: detailNotes.trim() || null,
+        due_date: detailDueDate ? new Date(detailDueDate).toISOString() : null,
+      });
+      setDetail(updated);
+      setDetailNotes(updated.notes || "");
+      setOk("Notas y fecha límite actualizadas.");
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingMeta(false);
+    }
   }
 
   async function submitPay(e) {
@@ -150,11 +197,13 @@ export default function LoansPage() {
     try {
       const updated = await api.payCredit(token, detail.id, {
         amount: Number(payForm.amount),
+        payment_method_id: payForm.payment_method_id,
         notes: payForm.notes.trim() || null,
       });
       setOk("Abono registrado correctamente.");
       setPayOpen(false);
       setDetail(updated);
+      setDetailNotes(updated.notes || "");
       setSelectedId(updated.id);
       await load();
     } catch (err) {
@@ -184,9 +233,9 @@ export default function LoansPage() {
       <DataToolbar>
         <FormField label="Estado">
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="">Todas</option>
             <option value="activo">Activas (con deuda)</option>
             <option value="saldado">Saldadas</option>
-            <option value="">Todas</option>
           </select>
         </FormField>
         <FormField label="Buscar cliente" className="toolbar-field grow">
@@ -219,7 +268,6 @@ export default function LoansPage() {
                       <th>Resumen</th>
                       <th>Debe</th>
                       <th>Límite</th>
-                      <th className="cell-actions-menu"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -246,27 +294,6 @@ export default function LoansPage() {
                           </div>
                         </td>
                         <td>{a.due_date ? new Date(a.due_date).toLocaleDateString("es-CO") : "—"}</td>
-                        <td className="cell-actions-menu" onClick={(e) => e.stopPropagation()}>
-                          <TableRowMenu
-                            label={`Opciones de ${a.customer_name}`}
-                            items={[
-                              {
-                                id: "detail",
-                                label: "Ver detalle",
-                                icon: RowMenuIcons.external,
-                                onClick: () => selectAccount(a.id),
-                              },
-                              {
-                                id: "pay",
-                                label: "Registrar abono",
-                                icon: RowMenuIcons.check,
-                                primary: true,
-                                hidden: a.status !== "activo" || Number(a.balance_due) <= 0,
-                                onClick: () => openPay(a),
-                              },
-                            ]}
-                          />
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -332,6 +359,35 @@ export default function LoansPage() {
                 )}
               </div>
 
+              <form className="credit-meta-form glass-form" onSubmit={saveAccountMeta}>
+                <h3 className="h3-panel">Notas de la cuenta</h3>
+                <p className="muted tiny credit-meta-hint">
+                  Incluye la nota del punto de venta al fiar. Puedes editarla aquí.
+                </p>
+                <FormRow cols={2}>
+                  <FormField label="Nota / observaciones">
+                    <textarea
+                      rows={3}
+                      value={detailNotes}
+                      onChange={(e) => setDetailNotes(e.target.value)}
+                      placeholder="Ej. Paga quincenalmente, deja mercancía en local…"
+                    />
+                  </FormField>
+                  <FormField label="Fecha límite">
+                    <input
+                      type="date"
+                      value={detailDueDate}
+                      onChange={(e) => setDetailDueDate(e.target.value)}
+                    />
+                  </FormField>
+                </FormRow>
+                <div className="form-actions-inline">
+                  <button type="submit" className="btn-secondary btn-sm" disabled={savingMeta}>
+                    {savingMeta ? "Guardando…" : "Guardar nota y fecha"}
+                  </button>
+                </div>
+              </form>
+
               <h3 className="h3-panel">Productos fiados</h3>
               {lines.length ? (
                 <>
@@ -382,6 +438,7 @@ export default function LoansPage() {
                         <strong>{fmt(p.amount)}</strong>
                         <span className="muted tiny">
                           {new Date(p.created_at).toLocaleString("es-CO")}
+                          {p.payment_method_name ? ` · ${p.payment_method_name}` : ""}
                           {p.notes ? ` · ${p.notes}` : ""}
                         </span>
                       </li>
@@ -418,20 +475,34 @@ export default function LoansPage() {
                   onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })}
                 />
               </FormField>
-              <FormField label="Nota">
-                <input
-                  value={payForm.notes}
-                  onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })}
-                  placeholder="Ej. Pago parcial en efectivo"
-                />
+              <FormField label="Forma de pago" required>
+                <select
+                  required
+                  value={payForm.payment_method_id}
+                  onChange={(e) => setPayForm({ ...payForm, payment_method_id: e.target.value })}
+                >
+                  {!paymentMethods.length && <option value="">Cargando…</option>}
+                  {paymentMethods.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
               </FormField>
             </FormRow>
+            <FormField label="Nota del abono">
+              <input
+                value={payForm.notes}
+                onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })}
+                placeholder="Opcional: referencia, comprobante…"
+              />
+            </FormField>
           </div>
           <FormActions>
             <button type="button" className="btn-secondary" onClick={() => setPayOpen(false)}>
               Cancelar
             </button>
-            <button type="submit" className="btn-primary" disabled={busy}>
+            <button type="submit" className="btn-primary" disabled={busy || !payForm.payment_method_id}>
               {busy ? "Guardando…" : "Confirmar abono"}
             </button>
           </FormActions>

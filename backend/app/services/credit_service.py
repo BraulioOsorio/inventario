@@ -6,14 +6,18 @@ from sqlalchemy.orm import Session
 
 from app.models.entities import User
 from app.repositories.credit_repository import CreditRepository
+from app.repositories.payment_method_repository import PaymentMethodRepository
+from app.services.payment_method_service import PaymentMethodService
 from app.repositories.customer_repository import CustomerRepository
 from app.repositories.product_repository import MovementRepository, ProductRepository
 from app.schemas.dtos import (
     CreditAccountOut,
+    CreditAccountUpdate,
     CreditChargeCreate,
     CreditLineOut,
     CreditPaymentCreate,
     CreditPaymentOut,
+    CreditSummaryOut,
 )
 
 
@@ -24,6 +28,7 @@ class CreditService:
         self.customers = CustomerRepository(db)
         self.products = ProductRepository(db)
         self.movements = MovementRepository(db)
+        self.payment_methods = PaymentMethodRepository(db)
 
     def _to_out(self, account, now: datetime, include_details: bool = False) -> CreditAccountOut:
         out = CreditAccountOut.model_validate(account)
@@ -59,6 +64,8 @@ class CreditService:
                 CreditPaymentOut(
                     id=p.id,
                     amount=float(p.amount),
+                    payment_method_id=p.payment_method_id,
+                    payment_method_name=p.payment_method.name if p.payment_method else None,
                     notes=p.notes,
                     created_at=p.created_at,
                 )
@@ -70,6 +77,42 @@ class CreditService:
         now = datetime.now(timezone.utc)
         accounts = self.credits.list_by_owner(user.id, status=status)
         return [self._to_out(a, now) for a in accounts]
+
+    def summary(self, user: User) -> CreditSummaryOut:
+        now = datetime.now(timezone.utc)
+        accounts = self.credits.list_by_owner(user.id, status="activo")
+        with_debt = [a for a in accounts if float(a.balance_due or 0) > 0.009]
+        total = round(sum(float(a.balance_due) for a in with_debt), 2)
+        overdue = 0
+        for a in with_debt:
+            if a.due_date and a.due_date.date() < now.date():
+                overdue += 1
+        return CreditSummaryOut(active_count=len(with_debt), total_debt=total, overdue_count=overdue)
+
+    def update_account(self, user: User, account_id: UUID, payload: CreditAccountUpdate) -> CreditAccountOut:
+        account = self.credits.get(account_id, user.id)
+        if not account:
+            raise HTTPException(status_code=404, detail="Cuenta de crédito no encontrada")
+        data = payload.model_dump(exclude_unset=True)
+        if "notes" in data:
+            account.notes = data["notes"]
+        if "due_date" in data:
+            account.due_date = data["due_date"]
+        self.db.commit()
+        now = datetime.now(timezone.utc)
+        refreshed = self.credits.get(account.id, user.id)
+        return self._to_out(refreshed, now, include_details=True)
+
+    @staticmethod
+    def _append_note(existing: str | None, new_note: str) -> str:
+        text = new_note.strip()
+        if not text:
+            return existing or ""
+        if not existing or not existing.strip():
+            return text
+        if text in existing:
+            return existing
+        return f"{existing.strip()}\n{text}"
 
     def get_account(self, user: User, account_id: UUID) -> CreditAccountOut:
         account = self.credits.get(account_id, user.id)
@@ -100,7 +143,7 @@ class CreditService:
                     notes=payload.notes,
                 )
         elif payload.notes:
-            account.notes = payload.notes
+            account.notes = self._append_note(account.notes, payload.notes)
 
         if payload.due_date:
             account.due_date = payload.due_date
@@ -165,7 +208,19 @@ class CreditService:
                 detail=f"El abono supera la deuda (${balance:,.0f} pendientes)",
             )
 
-        self.credits.add_payment(account.id, amount=amount, notes=payload.notes)
+        method = self.payment_methods.get(payload.payment_method_id, user.id)
+        if not method:
+            PaymentMethodService(self.db).ensure_defaults(user)
+            method = self.payment_methods.get(payload.payment_method_id, user.id)
+        if not method:
+            raise HTTPException(status_code=400, detail="Forma de pago no válida")
+
+        self.credits.add_payment(
+            account.id,
+            amount=amount,
+            notes=payload.notes,
+            payment_method_id=method.id,
+        )
         account.balance_due = round(max(0, balance - amount), 2)
         if account.balance_due <= 0:
             account.status = "saldado"

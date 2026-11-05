@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.entities import User
-from app.schemas.dtos import CreditAccountOut, CreditChargeCreate, CreditPaymentCreate
+from app.schemas.dtos import (
+    CreditAccountOut,
+    CreditAccountUpdate,
+    CreditChargeCreate,
+    CreditPaymentCreate,
+    CreditSummaryOut,
+)
 from app.services.business_day_service import BusinessDayService
 from app.services.credit_service import CreditService
 
@@ -22,6 +28,14 @@ def _client_date_header(x_client_date: str | None = Header(None, alias="X-Client
             detail="Encabezado X-Client-Date requerido.",
         )
     return x_client_date
+
+
+@router.get("/summary", response_model=CreditSummaryOut)
+def credit_summary(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return CreditService(db).summary(user)
 
 
 @router.get("", response_model=list[CreditAccountOut])
@@ -51,6 +65,16 @@ def get_credit_account(
     db: Session = Depends(get_db),
 ):
     return CreditService(db).get_account(user, account_id)
+
+
+@router.put("/{account_id}", response_model=CreditAccountOut)
+def update_credit_account(
+    account_id: UUID,
+    payload: CreditAccountUpdate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return CreditService(db).update_account(user, account_id, payload)
 
 
 @router.post("/{account_id}/payments", response_model=CreditAccountOut)

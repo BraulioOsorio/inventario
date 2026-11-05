@@ -380,9 +380,38 @@ class CreditChargeCreate(BaseModel):
     notes: str | None = None
 
 
+class PaymentMethodCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+
+
+class PaymentMethodUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+
+
+class PaymentMethodOut(BaseModel):
+    id: UUID
+    name: str
+    is_default: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class CreditPaymentCreate(BaseModel):
     amount: float = Field(gt=0)
+    payment_method_id: UUID
     notes: str | None = None
+
+
+class CreditAccountUpdate(BaseModel):
+    notes: str | None = None
+    due_date: datetime | None = None
+
+
+class CreditSummaryOut(BaseModel):
+    active_count: int = 0
+    total_debt: float = 0
+    overdue_count: int = 0
 
 
 class CreditLineOut(BaseModel):
@@ -400,6 +429,8 @@ class CreditLineOut(BaseModel):
 class CreditPaymentOut(BaseModel):
     id: UUID
     amount: float
+    payment_method_id: UUID | None = None
+    payment_method_name: str | None = None
     notes: str | None
     created_at: datetime
 

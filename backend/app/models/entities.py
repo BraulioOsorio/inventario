@@ -39,6 +39,7 @@ class User(Base):
     orders: Mapped[list["SupplierOrder"]] = relationship(back_populates="owner")
     loans: Mapped[list["Loan"]] = relationship(back_populates="owner")
     credit_accounts: Mapped[list["CreditAccount"]] = relationship(back_populates="owner")
+    payment_methods: Mapped[list["PaymentMethod"]] = relationship(back_populates="owner")
 
 
 class Category(Base):
@@ -218,13 +219,31 @@ class CreditLine(Base):
     product: Mapped["Product"] = relationship()
 
 
+class PaymentMethod(Base):
+    __tablename__ = "payment_methods"
+    __table_args__ = (UniqueConstraint("owner_id", "name", name="uq_payment_method_owner_name"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    owner: Mapped["User"] = relationship(back_populates="payment_methods")
+    payments: Mapped[list["CreditPayment"]] = relationship(back_populates="payment_method")
+
+
 class CreditPayment(Base):
     __tablename__ = "credit_payments"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("credit_accounts.id"), nullable=False)
+    payment_method_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("payment_methods.id"), nullable=True
+    )
     amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     account: Mapped["CreditAccount"] = relationship(back_populates="payments")
+    payment_method: Mapped["PaymentMethod | None"] = relationship(back_populates="payments")

@@ -10,6 +10,7 @@ const SUB_LINKS = [
   { to: "/movimientos?mode=in", mode: "in", label: "Entrada de stock", desc: "Ingresar mercancía" },
   { to: "/movimientos?mode=adjust", mode: "adjust", label: "Ajuste inventario", desc: "Salida sin cobro" },
   { to: "/movimientos?mode=history", mode: "history", label: "Historial", desc: "Ver movimientos" },
+  { to: "/formas-pago", mode: null, label: "Formas de pago", desc: "Efectivo, transferencia y más" },
 ];
 
 function OpsIcon() {
@@ -35,8 +36,9 @@ export default function NavOperacionesMenu() {
   const [panelStyle, setPanelStyle] = useState({ top: 120, left: 280 });
 
   const onMovimientos = location.pathname === "/movimientos";
+  const onFormasPago = location.pathname === "/formas-pago";
   const activeMode = new URLSearchParams(location.search).get("mode") || "pos";
-  const isGroupActive = onMovimientos;
+  const isGroupActive = onMovimientos || onFormasPago;
 
   function syncPanelPosition() {
     const rect = triggerRef.current?.getBoundingClientRect();
@@ -206,7 +208,10 @@ export default function NavOperacionesMenu() {
           <div className="nav-flyout-links">
             {SUB_LINKS.map((item) => {
               const linkMode = item.mode || "pos";
-              const active = onMovimientos && activeMode === linkMode;
+              const active =
+                item.to === "/formas-pago"
+                  ? onFormasPago
+                  : onMovimientos && activeMode === linkMode;
               return (
                 <NavLink
                   key={item.to}

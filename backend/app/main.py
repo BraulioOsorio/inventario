@@ -17,6 +17,7 @@ from app.api.routes import (
     movements,
     notifications,
     orders,
+    payment_methods,
     products,
     users,
 )
@@ -46,4 +47,5 @@ app.include_router(customers.router, prefix="/api/customers", tags=["Customers"]
 app.include_router(orders.router, prefix="/api/orders", tags=["Orders"])
 app.include_router(loans.router, prefix="/api/loans", tags=["Loans"])
 app.include_router(credit_accounts.router, prefix="/api/credit-accounts", tags=["CreditAccounts"])
+app.include_router(payment_methods.router, prefix="/api/payment-methods", tags=["PaymentMethods"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])

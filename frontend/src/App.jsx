@@ -7,6 +7,7 @@ import CategoriesPage from "./pages/CategoriesPage";
 import MovementsPage from "./pages/MovementsPage";
 import OrdersPage from "./pages/OrdersPage";
 import LoansPage from "./pages/LoansPage";
+import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import CustomersPage from "./pages/CustomersPage";
 import UsersPage from "./pages/UsersPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="productos" element={<ProductsPage />} />
         <Route path="pedidos" element={<OrdersPage />} />
         <Route path="prestamos" element={<LoansPage />} />
+        <Route path="formas-pago" element={<PaymentMethodsPage />} />
         <Route path="clientes" element={<CustomersPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
         <Route path="movimientos" element={<MovementsPage />} />

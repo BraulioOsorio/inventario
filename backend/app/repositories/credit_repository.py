@@ -49,7 +49,7 @@ class CreditRepository:
             .options(
                 joinedload(CreditAccount.customer),
                 joinedload(CreditAccount.lines).joinedload(CreditLine.product),
-                joinedload(CreditAccount.payments),
+                joinedload(CreditAccount.payments).joinedload(CreditPayment.payment_method),
             )
             .filter(CreditAccount.id == account_id, CreditAccount.owner_id == owner_id)
             .first()
