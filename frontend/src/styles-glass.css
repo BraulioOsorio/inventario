@@ -1186,6 +1186,43 @@ textarea:focus {
   font-weight: 700;
 }
 
+.credit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: var(--space-section, 1.35rem);
+  align-items: start;
+}
+
+.credit-list-panel .table-erp tbody tr {
+  cursor: pointer;
+}
+
+.credit-list-panel .table-erp tbody tr.row-selected td:not(.cell-actions-menu) {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.credit-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.credit-detail-panel .credit-detail {
+  padding: 0.15rem 0 0.5rem;
+}
+
+.credit-payments-list {
+  margin: 0;
+}
+
+@media (max-width: 960px) {
+  .credit-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .form-actions-inline {
   margin-top: 1rem;
   display: flex;
