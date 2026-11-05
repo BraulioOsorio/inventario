@@ -332,7 +332,11 @@ export default function MovementsPage() {
     setOk("");
     try {
       await api.revertMovement(token, movement.id);
-      setOk("Movimiento revertido. El stock quedó actualizado.");
+      setOk(
+        movement.note?.startsWith("Crédito ·")
+          ? "Movimiento revertido. Stock y crédito del cliente actualizados."
+          : "Movimiento revertido. El stock quedó actualizado."
+      );
       await refreshData(historyPage);
       await refreshBusinessDay();
     } catch (err) {

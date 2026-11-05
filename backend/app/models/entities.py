@@ -213,6 +213,9 @@ class CreditLine(Base):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_price: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     line_total: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
+    movement_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("stock_movements.id"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     account: Mapped["CreditAccount"] = relationship(back_populates="lines")

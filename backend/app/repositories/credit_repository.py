@@ -84,6 +84,52 @@ class CreditRepository:
         self.db.flush()
         return payment
 
+    def get_line_by_movement(self, movement_id: UUID, owner_id: UUID) -> CreditLine | None:
+        return (
+            self.db.query(CreditLine)
+            .join(CreditAccount, CreditLine.account_id == CreditAccount.id)
+            .filter(CreditLine.movement_id == movement_id, CreditAccount.owner_id == owner_id)
+            .first()
+        )
+
+    def find_legacy_line_for_movement(self, owner_id: UUID, movement) -> CreditLine | None:
+        if not movement.note or not str(movement.note).startswith("Crédito ·"):
+            return None
+        from datetime import timedelta
+
+        window_start = movement.created_at - timedelta(minutes=5)
+        window_end = movement.created_at + timedelta(minutes=5)
+        candidates = (
+            self.db.query(CreditLine)
+            .join(CreditAccount, CreditLine.account_id == CreditAccount.id)
+            .filter(
+                CreditAccount.owner_id == owner_id,
+                CreditLine.product_id == movement.product_id,
+                CreditLine.quantity == movement.quantity,
+                CreditLine.movement_id.is_(None),
+                CreditLine.created_at >= window_start,
+                CreditLine.created_at <= window_end,
+            )
+            .all()
+        )
+        if len(candidates) == 1:
+            return candidates[0]
+        mov_total = None
+        parts = str(movement.note).split("·")
+        if len(parts) >= 3:
+            raw = parts[-1].strip().replace(".", "").replace(",", ".")
+            try:
+                mov_total = float(raw)
+            except ValueError:
+                mov_total = None
+        for line in candidates:
+            if mov_total is not None and abs(float(line.line_total) - mov_total) < 0.02:
+                return line
+        return None
+
+    def delete_line(self, line: CreditLine) -> None:
+        self.db.delete(line)
+
     def get_payment(self, payment_id: UUID, owner_id: UUID) -> CreditPayment | None:
         return (
             self.db.query(CreditPayment)

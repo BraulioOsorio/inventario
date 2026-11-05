@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.entities import SupplierOrder, User
 from app.repositories.category_repository import CategoryRepository
 from app.repositories.credit_repository import CreditRepository
+from app.services.credit_service import CreditService
 from app.repositories.customer_repository import CustomerRepository
 from app.repositories.loan_repository import LoanRepository
 from app.repositories.order_repository import OrderRepository
@@ -183,6 +184,10 @@ class InventoryService:
         if not product:
             raise HTTPException(status_code=404, detail="Producto no encontrado")
 
+        credit_reverted = False
+        if movement.movement_type == "out" and movement.note and str(movement.note).startswith("Crédito ·"):
+            credit_reverted = CreditService(self.db).revert_line_for_movement(user, movement)
+
         if movement.movement_type == "in":
             if product.quantity < movement.quantity:
                 raise HTTPException(
@@ -206,6 +211,8 @@ class InventoryService:
         self.db.add(product)
         self.db.add(movement)
         self.db.commit()
+        if credit_reverted:
+            CreditService(self.db)._sync_all_balances(user.id)
         self.db.refresh(movement)
         return MovementOut.model_validate(movement)
 

@@ -248,7 +248,7 @@ class CreditService:
             stock_before = product.quantity
             product.quantity -= item.quantity
             self.db.add(product)
-            self.movements.create(
+            mov = self.movements.create(
                 owner_id=user.id,
                 product_id=product.id,
                 movement_type="out",
@@ -262,6 +262,7 @@ class CreditService:
                 quantity=item.quantity,
                 unit_price=unit_price,
                 line_total=line_total,
+                movement_id=mov.id,
             )
 
         account.balance_due = round(float(account.balance_due) + charge_total, 2)
@@ -273,6 +274,38 @@ class CreditService:
         refreshed = self.credits.get(account.id, user.id)
         now = datetime.now(timezone.utc)
         return self._to_out(refreshed, now, include_details=True)
+
+    def revert_line_for_movement(self, user: User, movement) -> bool:
+        """Elimina la línea de crédito ligada al movimiento. Devuelve True si aplicó."""
+        line = self.credits.get_line_by_movement(movement.id, user.id)
+        if not line:
+            line = self.credits.find_legacy_line_for_movement(user.id, movement)
+            if line:
+                line.movement_id = movement.id
+        if not line:
+            return False
+
+        account = self.credits.get(line.account_id, user.id)
+        if not account:
+            return False
+
+        charged = round(sum(float(ln.line_total) for ln in account.lines or []), 2)
+        paid = round(sum(float(p.amount) for p in account.payments or []), 2)
+        charged_after = round(charged - float(line.line_total), 2)
+        if paid > charged_after + 0.01:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "No se puede revertir este crédito: ya hay abonos registrados que superan "
+                    "la deuda si se quita este producto fiado. Ajusta o elimina abonos en Créditos."
+                ),
+            )
+
+        self.credits.delete_line(line)
+        self.db.flush()
+        refreshed = self.credits.get(account.id, user.id)
+        self._recalc_account_balance(refreshed, strict=False)
+        return True
 
     def register_payment(self, user: User, account_id: UUID, payload: CreditPaymentCreate) -> CreditAccountOut:
         account = self.credits.get(account_id, user.id)

@@ -128,6 +128,14 @@ def migrate_schema() -> None:
         conn.execute(
             text(
                 """
+                ALTER TABLE credit_lines
+                ADD COLUMN IF NOT EXISTS movement_id UUID REFERENCES stock_movements(id)
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
                 ALTER TABLE credit_payments
                 ADD COLUMN IF NOT EXISTS payment_method_id UUID REFERENCES payment_methods(id)
                 """
