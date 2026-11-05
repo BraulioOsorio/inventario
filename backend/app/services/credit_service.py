@@ -32,6 +32,14 @@ class CreditService:
         self.payment_methods = PaymentMethodRepository(db)
 
     @staticmethod
+    def _ledger_balance(account) -> float:
+        charged = round(sum(float(line.line_total) for line in account.lines or []), 2)
+        paid = round(sum(float(payment.amount) for payment in account.payments or []), 2)
+        if paid > charged + 0.01:
+            return 0.0
+        return round(max(0.0, charged - paid), 2)
+
+    @staticmethod
     def _recalc_account_balance(account, *, strict: bool = True) -> None:
         charged = round(sum(float(line.line_total) for line in account.lines or []), 2)
         paid = round(sum(float(payment.amount) for payment in account.payments or []), 2)
@@ -53,15 +61,10 @@ class CreditService:
 
     def _sync_all_balances(self, owner_id: UUID) -> None:
         accounts = self.credits.list_all_with_ledger(owner_id)
-        dirty = False
         for account in accounts:
-            before = (float(account.balance_due or 0), account.status)
             self._recalc_account_balance(account, strict=False)
-            after = (float(account.balance_due or 0), account.status)
-            if before != after:
-                dirty = True
-        if dirty:
-            self.db.commit()
+        self.db.commit()
+        self.db.expire_all()
 
     def _resolve_payment_method(self, user: User, method_id: UUID):
         method = self.payment_methods.get(method_id, user.id)
@@ -118,20 +121,43 @@ class CreditService:
     def list_accounts(self, user: User, status: str | None = None) -> list[CreditAccountOut]:
         self._sync_all_balances(user.id)
         now = datetime.now(timezone.utc)
+        ledger_accounts = {a.id: a for a in self.credits.list_all_with_ledger(user.id)}
         accounts = self.credits.list_by_owner(user.id, status=status)
-        return [self._to_out(a, now) for a in accounts]
+        results: list[CreditAccountOut] = []
+        for account in accounts:
+            out = self._to_out(account, now)
+            ledger = ledger_accounts.get(account.id)
+            if ledger:
+                bal = self._ledger_balance(ledger)
+                out.balance_due = bal
+                out.status = "saldado" if bal <= 0.009 else "activo"
+                if out.status == "activo" and account.due_date:
+                    out.is_overdue = account.due_date.date() < now.date()
+                else:
+                    out.is_overdue = False
+            results.append(out)
+        return results
 
     def summary(self, user: User) -> CreditSummaryOut:
         self._sync_all_balances(user.id)
         now = datetime.now(timezone.utc)
-        accounts = self.credits.list_by_owner(user.id)
-        with_debt = [a for a in accounts if float(a.balance_due or 0) > 0.009]
-        total = round(sum(float(a.balance_due) for a in with_debt), 2)
+        accounts = self.credits.list_all_with_ledger(user.id)
+        total = 0.0
+        active_count = 0
         overdue = 0
-        for a in with_debt:
-            if a.due_date and a.due_date.date() < now.date():
+        for account in accounts:
+            bal = self._ledger_balance(account)
+            if bal <= 0.009:
+                continue
+            active_count += 1
+            total += bal
+            if account.due_date and account.due_date.date() < now.date():
                 overdue += 1
-        return CreditSummaryOut(active_count=len(with_debt), total_debt=total, overdue_count=overdue)
+        return CreditSummaryOut(
+            active_count=active_count,
+            total_debt=round(total, 2),
+            overdue_count=overdue,
+        )
 
     def update_account(self, user: User, account_id: UUID, payload: CreditAccountUpdate) -> CreditAccountOut:
         account = self.credits.get(account_id, user.id)
@@ -166,7 +192,12 @@ class CreditService:
         self.db.commit()
         account = self.credits.get(account_id, user.id)
         now = datetime.now(timezone.utc)
-        return self._to_out(account, now, include_details=True)
+        out = self._to_out(account, now, include_details=True)
+        bal = self._ledger_balance(account)
+        out.balance_due = bal
+        out.status = "saldado" if bal <= 0.009 else "activo"
+        out.is_overdue = bool(out.status == "activo" and account.due_date and account.due_date.date() < now.date())
+        return out
 
     def charge(self, user: User, payload: CreditChargeCreate) -> CreditAccountOut:
         customer = self.customers.get(payload.customer_id, user.id)
@@ -251,7 +282,7 @@ class CreditService:
             raise HTTPException(status_code=400, detail="Esta cuenta ya está saldada")
 
         amount = round(float(payload.amount), 2)
-        balance = float(account.balance_due)
+        balance = self._ledger_balance(account)
         if amount > balance + 0.01:
             raise HTTPException(
                 status_code=400,
@@ -268,8 +299,8 @@ class CreditService:
         )
         refreshed = self.credits.get(account.id, user.id)
         self._recalc_account_balance(refreshed)
-
         self.db.commit()
+        self._sync_all_balances(user.id)
         refreshed = self.credits.get(account.id, user.id)
         now = datetime.now(timezone.utc)
         return self._to_out(refreshed, now, include_details=True)
@@ -299,6 +330,7 @@ class CreditService:
         self._recalc_account_balance(refreshed)
 
         self.db.commit()
+        self._sync_all_balances(user.id)
         refreshed = self.credits.get(account.id, user.id)
         now = datetime.now(timezone.utc)
         return self._to_out(refreshed, now, include_details=True)

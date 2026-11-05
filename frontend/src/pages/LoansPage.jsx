@@ -71,10 +71,8 @@ export default function LoansPage() {
 
   async function load() {
     try {
-      const [data, sum] = await Promise.all([
-        api.listCreditAccounts(token, { status: statusFilter || undefined }),
-        api.creditAccountsSummary(token),
-      ]);
+      const data = await api.listCreditAccounts(token, { status: statusFilter || undefined });
+      const sum = await api.creditAccountsSummary(token);
       setAccounts(data);
       setSummary(sum || { active_count: 0, total_debt: 0, overdue_count: 0 });
     } catch (err) {
@@ -258,7 +256,7 @@ export default function LoansPage() {
       <PageHeader
         kicker="Operaciones"
         title="Créditos de clientes"
-        subtitle="Consulta deudas, productos fiados y abonos. Registra ventas a crédito desde Operaciones → Crédito."
+        subtitle="Deuda total = suma de lo fiado menos abonos por cuenta. Editar un abono de una cuenta ya saldada ($ 0) no cambia el total."
       />
 
       {error && <Alert type="error">{error}</Alert>}
