@@ -19,8 +19,13 @@ function writeStore(store) {
   }
 }
 
-/** Persist product images locally keyed by id + updated_at for faster reloads. */
-export function syncProductImageCache(products) {
+/**
+ * @param {Array} products
+ * @param {{ mergeOnly?: boolean }} options
+ * mergeOnly: solo agrega/actualiza imágenes recibidas; no borra caché (listados sin foto).
+ */
+export function syncProductImageCache(products, options = {}) {
+  const { mergeOnly = false } = options;
   if (!Array.isArray(products)) return;
   const store = readStore();
   const seen = new Set();
@@ -35,16 +40,18 @@ export function syncProductImageCache(products) {
         store[p.id] = { updated_at: p.updated_at, src: p.image_base64 };
         changed = true;
       }
-    } else if (store[p.id]) {
+    } else if (!mergeOnly && store[p.id]) {
       delete store[p.id];
       changed = true;
     }
   }
 
-  for (const id of Object.keys(store)) {
-    if (!seen.has(id)) {
-      delete store[id];
-      changed = true;
+  if (!mergeOnly) {
+    for (const id of Object.keys(store)) {
+      if (!seen.has(id)) {
+        delete store[id];
+        changed = true;
+      }
     }
   }
 
@@ -56,6 +63,11 @@ export function getProductImageSrc(product) {
   if (product.image_base64) return product.image_base64;
   const entry = readStore()[product.id];
   return entry?.src || null;
+}
+
+export function productNeedsImageHydration(products) {
+  if (!Array.isArray(products) || !products.length) return false;
+  return products.some((p) => p?.id && !getProductImageSrc(p));
 }
 
 export function clearProductImageCacheEntry(productId) {

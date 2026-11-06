@@ -6,7 +6,7 @@ import { useBusinessDay } from "../businessDay";
 import { Alert, EmptyState, FormActions, FormCard, FormField, FormRow, PageHeader, Panel, RowMenuIcons, TableRowMenu } from "../components/ui";
 import { movementTypeLabel } from "../utils/labels";
 import ProductImage from "../components/ProductImage";
-import { syncProductImageCache } from "../utils/productImageCache";
+import { productNeedsImageHydration, syncProductImageCache } from "../utils/productImageCache";
 
 const fmt = (n) =>
   Number(n || 0).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
@@ -77,10 +77,20 @@ export default function MovementsPage() {
       api.listProducts(token, { active_only: false, include_images: false }),
       api.listCustomers(token),
     ]);
-    setProducts(catalog.filter((p) => p.is_active !== false));
-    setAllProducts(catalog);
+    let list = catalog;
+    if (productNeedsImageHydration(catalog)) {
+      try {
+        list = await api.listProducts(token, { active_only: false, include_images: true });
+        syncProductImageCache(list);
+      } catch {
+        syncProductImageCache(catalog, { mergeOnly: true });
+      }
+    } else {
+      syncProductImageCache(catalog, { mergeOnly: true });
+    }
+    setProducts(list.filter((p) => p.is_active !== false));
+    setAllProducts(list);
     setCustomers(c.filter((x) => x.is_active !== false));
-    syncProductImageCache(catalog.filter((p) => p.image_base64));
   }
 
   async function loadHistory(page = historyPage) {
