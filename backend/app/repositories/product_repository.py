@@ -1,8 +1,25 @@
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 
 from app.models.entities import Product, StockMovement
+
+PRODUCT_LIST_LOAD = (
+    Product.id,
+    Product.owner_id,
+    Product.category_id,
+    Product.name,
+    Product.sku,
+    Product.description,
+    Product.unit,
+    Product.quantity,
+    Product.min_stock,
+    Product.unit_price,
+    Product.context_type,
+    Product.is_active,
+    Product.created_at,
+    Product.updated_at,
+)
 
 
 class ProductRepository:
@@ -15,8 +32,12 @@ class ProductRepository:
         context_type: str | None = None,
         q: str | None = None,
         active_only: bool = True,
+        *,
+        include_image: bool = False,
     ) -> list[Product]:
         query = self.db.query(Product).filter(Product.owner_id == owner_id)
+        if not include_image:
+            query = query.options(load_only(*PRODUCT_LIST_LOAD))
         if active_only:
             query = query.filter(Product.is_active.is_(True))
         if context_type:
@@ -25,6 +46,15 @@ class ProductRepository:
             like = f"%{q.strip()}%"
             query = query.filter((Product.name.ilike(like)) | (Product.sku.ilike(like)))
         return query.order_by(Product.name.asc()).all()
+
+    def list_stock_alert_rows(self, owner_id: UUID) -> list[Product]:
+        """Solo columnas ligeras para notificaciones (sin imagen)."""
+        return (
+            self.db.query(Product)
+            .options(load_only(*PRODUCT_LIST_LOAD))
+            .filter(Product.owner_id == owner_id, Product.is_active.is_(True))
+            .all()
+        )
 
     def get(self, product_id: UUID, owner_id: UUID) -> Product | None:
         return (

@@ -73,8 +73,26 @@ class InventoryService:
         self.categories.delete(category)
 
     # --- Products ---
-    def _product_out(self, product, moved_ids: set | None = None) -> ProductOut:
-        out = ProductOut.model_validate(product)
+    def _product_out(self, product, moved_ids: set | None = None, *, include_image: bool = True) -> ProductOut:
+        if include_image:
+            out = ProductOut.model_validate(product)
+        else:
+            out = ProductOut(
+                id=product.id,
+                name=product.name,
+                sku=product.sku,
+                description=product.description,
+                unit=product.unit,
+                quantity=product.quantity,
+                min_stock=product.min_stock,
+                unit_price=float(product.unit_price or 0),
+                context_type=product.context_type,
+                category_id=product.category_id,
+                is_active=product.is_active,
+                image_base64=None,
+                created_at=product.created_at,
+                updated_at=product.updated_at,
+            )
         out.low_stock = product.quantity <= product.min_stock
         if moved_ids is not None:
             out.has_movements = product.id in moved_ids
@@ -88,12 +106,18 @@ class InventoryService:
         context_type: str | None = None,
         q: str | None = None,
         active_only: bool = True,
+        *,
+        include_images: bool = False,
     ) -> list[ProductOut]:
         items = self.products.list_by_owner(
-            user.id, context_type=context_type, q=q, active_only=active_only
+            user.id,
+            context_type=context_type,
+            q=q,
+            active_only=active_only,
+            include_image=include_images,
         )
         moved_ids = self.products.ids_with_movements(user.id)
-        return [self._product_out(item, moved_ids) for item in items]
+        return [self._product_out(item, moved_ids, include_image=include_images) for item in items]
 
     def create_product(self, user: User, payload: ProductCreate) -> ProductOut:
         if payload.category_id and not self.categories.get(payload.category_id, user.id):
@@ -441,7 +465,7 @@ class InventoryService:
         items: list[NotificationItem] = []
 
         # 1. Alertas de inventario bajo o agotado
-        products = self.products.list_by_owner(user.id)
+        products = self.products.list_stock_alert_rows(user.id)
         for p in products:
             if p.quantity <= 0:
                 items.append(
@@ -500,7 +524,7 @@ class InventoryService:
                     )
                 )
 
-        # 3. Créditos vencidos (cuenta cliente)
+        # 3. Créditos vencidos (cuenta cliente) — sin cargar líneas/abonos
         credit_accounts = self.credits.list_by_owner(user.id, status="activo")
         for acc in credit_accounts:
             if float(acc.balance_due) <= 0 or not acc.due_date:

@@ -17,11 +17,16 @@ def list_products(
     context_type: str | None = Query(default=None),
     q: str | None = Query(default=None),
     active_only: bool = Query(default=True),
+    include_images: bool = Query(default=False),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     return InventoryService(db).list_products(
-        user, context_type=context_type, q=q, active_only=active_only
+        user,
+        context_type=context_type,
+        q=q,
+        active_only=active_only,
+        include_images=include_images,
     )
 
 

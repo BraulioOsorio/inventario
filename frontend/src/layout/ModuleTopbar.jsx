@@ -46,7 +46,9 @@ export default function ModuleTopbar({ onMenuToggle }) {
 
   useEffect(() => {
     fetchNotifications();
-    const timer = setInterval(fetchNotifications, 45000);
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") fetchNotifications();
+    }, 180000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, pathname]);

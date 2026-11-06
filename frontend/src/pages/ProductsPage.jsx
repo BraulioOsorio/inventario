@@ -61,6 +61,7 @@ export default function ProductsPage() {
         context_type: context || undefined,
         q: searchQuery(debouncedSearch),
         active_only: false,
+        include_images: true,
       }),
       api.listCategories(token),
     ]);

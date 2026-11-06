@@ -165,12 +165,13 @@ class CreditService:
     def list_accounts(self, user: User, status: str | None = None) -> list[CreditAccountOut]:
         self._sync_all_balances(user.id)
         now = datetime.now(timezone.utc)
-        ledger_accounts = {a.id: a for a in self.credits.list_all_with_ledger(user.id)}
+        ledger_accounts = self.credits.list_all_with_ledger(user.id)
+        ledger_map = {a.id: a for a in ledger_accounts}
         accounts = self.credits.list_by_owner(user.id, status=status)
         results: list[CreditAccountOut] = []
         for account in accounts:
             out = self._to_out(account, now)
-            ledger = ledger_accounts.get(account.id)
+            ledger = ledger_map.get(account.id)
             if ledger:
                 bal = self._ledger_balance(ledger)
                 out.balance_due = bal

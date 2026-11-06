@@ -73,15 +73,14 @@ export default function MovementsPage() {
   const byId = useMemo(() => productMap(allProducts), [allProducts]);
 
   async function loadCatalog() {
-    const [active, catalog, c] = await Promise.all([
-      api.listProducts(token, { active_only: true }),
-      api.listProducts(token, { active_only: false }),
+    const [catalog, c] = await Promise.all([
+      api.listProducts(token, { active_only: false, include_images: false }),
       api.listCustomers(token),
     ]);
-    setProducts(active);
+    setProducts(catalog.filter((p) => p.is_active !== false));
     setAllProducts(catalog);
     setCustomers(c.filter((x) => x.is_active !== false));
-    syncProductImageCache([...catalog, ...active]);
+    syncProductImageCache(catalog.filter((p) => p.image_base64));
   }
 
   async function loadHistory(page = historyPage) {

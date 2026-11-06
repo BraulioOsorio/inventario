@@ -177,7 +177,7 @@ def seed_admin() -> None:
         db.close()
 
 
-def init_db(retries: int = 8, delay_seconds: int = 5) -> None:
+def init_db(retries: int = 3, delay_seconds: int = 3) -> None:
     last_error: Exception | None = None
     for attempt in range(1, retries + 1):
         try:
