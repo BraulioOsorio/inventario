@@ -96,6 +96,22 @@ class ProductRepository:
     def movement_count(self, product_id: UUID) -> int:
         return self.db.query(StockMovement).filter(StockMovement.product_id == product_id).count()
 
+    def ids_with_stored_image(self, owner_id: UUID, product_ids: list[UUID]) -> set[UUID]:
+        """IDs con imagen guardada (sin cargar el TEXT completo en filas principales)."""
+        if not product_ids:
+            return set()
+        rows = (
+            self.db.query(Product.id)
+            .filter(
+                Product.owner_id == owner_id,
+                Product.id.in_(product_ids),
+                Product.image_base64.isnot(None),
+                Product.image_base64 != "",
+            )
+            .all()
+        )
+        return {row[0] for row in rows}
+
 
 class MovementRepository:
     def __init__(self, db: Session):

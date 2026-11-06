@@ -73,10 +73,19 @@ class InventoryService:
         self.categories.delete(category)
 
     # --- Products ---
-    def _product_out(self, product, moved_ids: set | None = None, *, include_image: bool = True) -> ProductOut:
+    def _product_out(
+        self,
+        product,
+        moved_ids: set | None = None,
+        *,
+        include_image: bool = True,
+        has_image: bool | None = None,
+    ) -> ProductOut:
         if include_image:
             out = ProductOut.model_validate(product)
+            out.has_image = has_image if has_image is not None else bool(product.image_base64)
         else:
+            hi = has_image if has_image is not None else False
             out = ProductOut(
                 id=product.id,
                 name=product.name,
@@ -90,6 +99,7 @@ class InventoryService:
                 category_id=product.category_id,
                 is_active=product.is_active,
                 image_base64=None,
+                has_image=hi,
                 created_at=product.created_at,
                 updated_at=product.updated_at,
             )
@@ -117,7 +127,18 @@ class InventoryService:
             include_image=include_images,
         )
         moved_ids = self.products.ids_with_movements(user.id)
-        return [self._product_out(item, moved_ids, include_image=include_images) for item in items]
+        image_ids: set | None = None
+        if not include_images and items:
+            image_ids = self.products.ids_with_stored_image(user.id, [i.id for i in items])
+        return [
+            self._product_out(
+                item,
+                moved_ids,
+                include_image=include_images,
+                has_image=(True if include_images else (item.id in image_ids if image_ids is not None else False)),
+            )
+            for item in items
+        ]
 
     def create_product(self, user: User, payload: ProductCreate) -> ProductOut:
         if payload.category_id and not self.categories.get(payload.category_id, user.id):

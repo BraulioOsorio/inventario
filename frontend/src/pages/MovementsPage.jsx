@@ -6,7 +6,7 @@ import { useBusinessDay } from "../businessDay";
 import { Alert, EmptyState, FormActions, FormCard, FormField, FormRow, PageHeader, Panel, RowMenuIcons, TableRowMenu } from "../components/ui";
 import { movementTypeLabel } from "../utils/labels";
 import ProductImage from "../components/ProductImage";
-import { productNeedsImageHydration, syncProductImageCache } from "../utils/productImageCache";
+import { productsNeedingImageHydration, syncProductImageCache } from "../utils/productImageCache";
 
 const fmt = (n) =>
   Number(n || 0).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
@@ -78,7 +78,7 @@ export default function MovementsPage() {
       api.listCustomers(token),
     ]);
     let list = catalog;
-    if (productNeedsImageHydration(catalog)) {
+    if (productsNeedingImageHydration(catalog)) {
       try {
         list = await api.listProducts(token, { active_only: false, include_images: true });
         syncProductImageCache(list);

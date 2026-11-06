@@ -186,6 +186,7 @@ class ProductOut(BaseModel):
     category_id: UUID | None
     is_active: bool
     image_base64: str | None = None
+    has_image: bool = Field(default=False, description="True si hay foto guardada en BD")
     created_at: datetime
     updated_at: datetime
     low_stock: bool = False

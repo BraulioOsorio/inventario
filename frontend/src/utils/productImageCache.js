@@ -65,9 +65,26 @@ export function getProductImageSrc(product) {
   return entry?.src || null;
 }
 
-export function productNeedsImageHydration(products) {
+/** True si el caché no coincide con updated_at del servidor (imagen cambió). */
+function cacheStaleForProduct(product) {
+  if (!product?.id) return true;
+  const entry = readStore()[product.id];
+  if (!entry) return true;
+  if (!product.updated_at) return false;
+  return entry.updated_at !== product.updated_at;
+}
+
+/**
+ * Hay que pedir include_images=true solo si en BD hay foto (has_image) y aún no tenemos
+ * bytes válidos en memoria/caché o la foto pudo haber cambiado (updated_at).
+ */
+export function productsNeedingImageHydration(products) {
   if (!Array.isArray(products) || !products.length) return false;
-  return products.some((p) => p?.id && !getProductImageSrc(p));
+  return products.some((p) => {
+    if (!p?.id || !p.has_image) return false;
+    if (getProductImageSrc(p) && !cacheStaleForProduct(p)) return false;
+    return true;
+  });
 }
 
 export function clearProductImageCacheEntry(productId) {

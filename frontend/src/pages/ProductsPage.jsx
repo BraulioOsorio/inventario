@@ -18,7 +18,7 @@ import {
 } from "../components/ui";
 import { contextTypeLabel, formatMoney } from "../utils/labels";
 import ProductImage from "../components/ProductImage";
-import { syncProductImageCache } from "../utils/productImageCache";
+import { productsNeedingImageHydration, syncProductImageCache } from "../utils/productImageCache";
 import { readImageAsDataUrl } from "../utils/userDisplay";
 
 const empty = {
@@ -56,18 +56,32 @@ export default function ProductsPage() {
   const debouncedSearch = useDebouncedValue(search);
 
   async function load() {
-    const [p, c] = await Promise.all([
+    const [pLite, c] = await Promise.all([
       api.listProducts(token, {
         context_type: context || undefined,
         q: searchQuery(debouncedSearch),
         active_only: false,
-        include_images: true,
+        include_images: false,
       }),
       api.listCategories(token),
     ]);
+    syncProductImageCache(pLite, { mergeOnly: true });
+    let p = pLite;
+    if (productsNeedingImageHydration(pLite)) {
+      try {
+        p = await api.listProducts(token, {
+          context_type: context || undefined,
+          q: searchQuery(debouncedSearch),
+          active_only: false,
+          include_images: true,
+        });
+        syncProductImageCache(p);
+      } catch {
+        syncProductImageCache(pLite, { mergeOnly: true });
+      }
+    }
     setProducts(p);
     setCategories(c);
-    syncProductImageCache(p);
   }
 
   useEffect(() => {
