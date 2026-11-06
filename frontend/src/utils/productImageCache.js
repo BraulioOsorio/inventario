@@ -34,6 +34,12 @@ export function syncProductImageCache(products, options = {}) {
   for (const p of products) {
     if (!p?.id) continue;
     seen.add(p.id);
+    /* Listado sin binario: si el API dice que ya no hay foto, limpiar caché (también en mergeOnly). */
+    if (p.has_image === false && store[p.id]) {
+      delete store[p.id];
+      changed = true;
+      continue;
+    }
     if (p.image_base64) {
       const prev = store[p.id];
       if (!prev || prev.updated_at !== p.updated_at || prev.src !== p.image_base64) {
@@ -60,31 +66,22 @@ export function syncProductImageCache(products, options = {}) {
 
 export function getProductImageSrc(product) {
   if (!product?.id) return null;
+  if (product.has_image === false) return null;
   if (product.image_base64) return product.image_base64;
   const entry = readStore()[product.id];
   return entry?.src || null;
 }
 
-/** True si el caché no coincide con updated_at del servidor (imagen cambió). */
-function cacheStaleForProduct(product) {
-  if (!product?.id) return true;
-  const entry = readStore()[product.id];
-  if (!entry) return true;
-  if (!product.updated_at) return false;
-  return entry.updated_at !== product.updated_at;
-}
-
 /**
- * Hay que pedir include_images=true solo si en BD hay foto (has_image) y aún no tenemos
- * bytes válidos en memoria/caché o la foto pudo haber cambiado (updated_at).
+ * Pedir include_images=true solo si en BD hay foto (has_image) y aún no tenemos bytes
+ * en la respuesta actual ni en localStorage.
+ *
+ * No usar product.updated_at para “staleness”: ese campo cambia en cada venta/stock
+ * y provocaba descargar imágenes otra y otra vez.
  */
 export function productsNeedingImageHydration(products) {
   if (!Array.isArray(products) || !products.length) return false;
-  return products.some((p) => {
-    if (!p?.id || !p.has_image) return false;
-    if (getProductImageSrc(p) && !cacheStaleForProduct(p)) return false;
-    return true;
-  });
+  return products.some((p) => p?.id && p.has_image && !getProductImageSrc(p));
 }
 
 export function clearProductImageCacheEntry(productId) {

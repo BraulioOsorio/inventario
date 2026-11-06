@@ -18,7 +18,11 @@ import {
 } from "../components/ui";
 import { contextTypeLabel, formatMoney } from "../utils/labels";
 import ProductImage from "../components/ProductImage";
-import { productsNeedingImageHydration, syncProductImageCache } from "../utils/productImageCache";
+import {
+  clearProductImageCacheEntry,
+  productsNeedingImageHydration,
+  syncProductImageCache,
+} from "../utils/productImageCache";
 import { readImageAsDataUrl } from "../utils/userDisplay";
 
 const empty = {
@@ -194,6 +198,7 @@ export default function ProductsPage() {
 
   function onRemoveImage() {
     setImageMsg("");
+    if (editingId) clearProductImageCacheEntry(editingId);
     setForm((prev) => ({ ...prev, image_base64: null }));
   }
 
