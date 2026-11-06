@@ -22,7 +22,8 @@ function writeStore(store) {
 /**
  * @param {Array} products
  * @param {{ mergeOnly?: boolean }} options
- * mergeOnly: solo agrega/actualiza imágenes recibidas; no borra caché (listados sin foto).
+ * mergeOnly: solo agrega/actualiza; no borra entradas que no vienen en este array.
+ * Obligatorio cuando el array es un subconjunto (filtro, búsqueda, paginación).
  */
 export function syncProductImageCache(products, options = {}) {
   const { mergeOnly = false } = options;

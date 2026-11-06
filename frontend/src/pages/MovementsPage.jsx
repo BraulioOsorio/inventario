@@ -81,7 +81,7 @@ export default function MovementsPage() {
     if (productsNeedingImageHydration(catalog)) {
       try {
         list = await api.listProducts(token, { active_only: false, include_images: true });
-        syncProductImageCache(list);
+        syncProductImageCache(list, { mergeOnly: true });
       } catch {
         syncProductImageCache(catalog, { mergeOnly: true });
       }

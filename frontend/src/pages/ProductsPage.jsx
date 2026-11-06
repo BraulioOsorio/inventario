@@ -79,7 +79,8 @@ export default function ProductsPage() {
           active_only: false,
           include_images: true,
         });
-        syncProductImageCache(p);
+        /* mergeOnly: el listado puede ser subconjunto (búsqueda/contexto); no borrar caché del resto. */
+        syncProductImageCache(p, { mergeOnly: true });
       } catch {
         syncProductImageCache(pLite, { mergeOnly: true });
       }
