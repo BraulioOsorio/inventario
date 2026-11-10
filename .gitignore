@@ -1,4 +1,7 @@
 # Entorno y secretos
+*-f7043f08756f.json
+*iam.gserviceaccount.com*.json
+vocal-tracer-*.json
 .env
 .env.local
 .env.*.local

@@ -41,6 +41,25 @@ async function request(path, { method = "GET", body, token, clientDate } = {}) {
   return data;
 }
 
+async function requestBinary(path, { token } = {}) {
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${API_URL}${path}`, { headers });
+  if (!res.ok) {
+    throw new Error("No se pudo cargar la imagen");
+  }
+  return res.blob();
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 export const api = {
   requestAccess: (payload) => request("/api/auth/request-access", { method: "POST", body: payload }),
   register: (payload) => request("/api/auth/register", { method: "POST", body: payload }),
@@ -66,6 +85,11 @@ export const api = {
   updateProduct: (token, id, payload) =>
     request(`/api/products/${id}`, { method: "PUT", body: payload, token }),
   deleteProduct: (token, id) => request(`/api/products/${id}`, { method: "DELETE", token }),
+  fetchProductImageDataUrl: async (token, productId) => {
+    const blob = await requestBinary(`/api/media/products/${productId}/image`, { token });
+    return blobToDataUrl(blob);
+  },
+  fetchMyAvatarBlob: (token) => requestBinary("/api/media/me/avatar", { token }),
   listCategories: (token) => request("/api/categories", { token }),
   createCategory: (token, payload) =>
     request("/api/categories", { method: "POST", body: payload, token }),

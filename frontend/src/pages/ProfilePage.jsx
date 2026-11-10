@@ -145,7 +145,7 @@ export default function ProfilePage() {
             >
               {busyAvatar ? "Guardando…" : "Subir foto"}
             </button>
-            {user?.avatar_base64 && (
+            {(user?.has_avatar || user?.avatar_base64) && (
               <button
                 type="button"
                 className="btn-danger-ghost btn-sm"

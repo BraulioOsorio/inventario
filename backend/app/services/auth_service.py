@@ -12,7 +12,9 @@ from app.core.security import (
     verify_password,
     verify_password_reset_token,
 )
+from app.core.user_presenter import user_to_out
 from app.models.entities import User
+from app.services.image_storage import apply_user_avatar
 from app.repositories.user_repository import UserRepository
 from app.schemas.dtos import (
     AdminUserCreate,
@@ -111,7 +113,7 @@ class AuthService:
         )
 
     def list_users(self) -> list[UserOut]:
-        return [UserOut.model_validate(u) for u in self.users.list_all()]
+        return [user_to_out(u) for u in self.users.list_all()]
 
     def admin_create_user(self, payload: AdminUserCreate) -> UserOut:
         if self.users.get_by_email(payload.email):
@@ -123,15 +125,23 @@ class AuthService:
             is_admin=payload.is_admin,
             is_active=payload.is_active,
         )
-        return UserOut.model_validate(user)
+        return user_to_out(user)
 
     def update_profile(self, user: User, payload: ProfileUpdate) -> UserOut:
         updated = self.users.update(user, full_name=payload.full_name.strip())
-        return UserOut.model_validate(updated)
+        return user_to_out(updated)
 
     def update_avatar(self, user: User, payload: AvatarUpdate) -> UserOut:
-        updated = self.users.update(user, avatar_base64=payload.avatar_base64)
-        return UserOut.model_validate(updated)
+        try:
+            updated = apply_user_avatar(self.users.db, user, payload.avatar_base64)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="No se pudo guardar el avatar en Drive",
+            ) from exc
+        return user_to_out(updated)
 
     def change_password(self, user: User, payload: PasswordChange) -> SimpleMessageResponse:
         if not verify_password(payload.current_password, user.password_hash):
@@ -155,11 +165,11 @@ class AuthService:
         if "password" in data:
             data["password_hash"] = hash_password(data.pop("password"))
         updated = self.users.update(user, **data)
-        return UserOut.model_validate(updated)
+        return user_to_out(updated)
 
     def _token_response(self, user: User) -> TokenOut:
         token = create_access_token(
             str(user.id),
             {"email": user.email, "is_admin": bool(user.is_admin)},
         )
-        return TokenOut(access_token=token, user=UserOut.model_validate(user))
+        return TokenOut(access_token=token, user=user_to_out(user))

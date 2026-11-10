@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, load_only
 
 from app.models.entities import Product, StockMovement
@@ -74,7 +75,7 @@ class ProductRepository:
         for key, value in fields.items():
             if value is not None:
                 setattr(product, key, value)
-            elif key in {"description", "category_id", "image_base64"}:
+            elif key in {"description", "category_id", "image_base64", "image_drive_file_id"}:
                 setattr(product, key, value)
         self.db.commit()
         self.db.refresh(product)
@@ -105,8 +106,10 @@ class ProductRepository:
             .filter(
                 Product.owner_id == owner_id,
                 Product.id.in_(product_ids),
-                Product.image_base64.isnot(None),
-                Product.image_base64 != "",
+                or_(
+                    and_(Product.image_drive_file_id.isnot(None), Product.image_drive_file_id != ""),
+                    and_(Product.image_base64.isnot(None), Product.image_base64 != ""),
+                ),
             )
             .all()
         )

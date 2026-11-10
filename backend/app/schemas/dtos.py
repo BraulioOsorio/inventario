@@ -83,6 +83,7 @@ class UserOut(BaseModel):
     is_admin: bool = False
     is_active: bool = True
     avatar_base64: str | None = None
+    has_avatar: bool = False
     created_at: datetime
 
     model_config = {"from_attributes": True}

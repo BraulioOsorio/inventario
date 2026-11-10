@@ -53,6 +53,22 @@ def migrate_schema() -> None:
         conn.execute(
             text(
                 """
+                ALTER TABLE products
+                ADD COLUMN IF NOT EXISTS image_drive_file_id VARCHAR(128)
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS avatar_drive_file_id VARCHAR(128)
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
                 ALTER TABLE stock_movements
                 ADD COLUMN IF NOT EXISTS stock_before INTEGER
                 """
@@ -185,6 +201,12 @@ def init_db(retries: int = 3, delay_seconds: int = 3) -> None:
             Base.metadata.create_all(bind=engine)
             migrate_schema()
             seed_admin()
+            try:
+                from app.services.image_migration import migrate_legacy_images_batch
+
+                migrate_legacy_images_batch()
+            except Exception as mig_exc:  # noqa: BLE001
+                print(f"Migración imágenes a Drive: {mig_exc}")
             print("Tablas creadas / verificadas en Supabase Postgres.")
             return
         except Exception as exc:  # noqa: BLE001

@@ -20,6 +20,8 @@ import { contextTypeLabel, formatMoney } from "../utils/labels";
 import ProductImage from "../components/ProductImage";
 import {
   clearProductImageCacheEntry,
+  getProductImageSrc,
+  hydrateProductImages,
   productsNeedingImageHydration,
   syncProductImageCache,
 } from "../utils/productImageCache";
@@ -70,22 +72,10 @@ export default function ProductsPage() {
       api.listCategories(token),
     ]);
     syncProductImageCache(pLite, { mergeOnly: true });
-    let p = pLite;
     if (productsNeedingImageHydration(pLite)) {
-      try {
-        p = await api.listProducts(token, {
-          context_type: context || undefined,
-          q: searchQuery(debouncedSearch),
-          active_only: false,
-          include_images: true,
-        });
-        /* mergeOnly: el listado puede ser subconjunto (búsqueda/contexto); no borrar caché del resto. */
-        syncProductImageCache(p, { mergeOnly: true });
-      } catch {
-        syncProductImageCache(pLite, { mergeOnly: true });
-      }
+      await hydrateProductImages(token, pLite, api.fetchProductImageDataUrl);
     }
-    setProducts(p);
+    setProducts(pLite);
     setCategories(c);
   }
 
@@ -112,7 +102,7 @@ export default function ProductsPage() {
       unit_price: product.unit_price,
       context_type: product.context_type,
       category_id: product.category_id || "",
-      image_base64: product.image_base64 || null,
+      image_base64: product.image_base64 || getProductImageSrc(product) || null,
     });
     setEditingId(product.id);
     setTab("general");

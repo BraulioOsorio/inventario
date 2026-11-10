@@ -6,7 +6,11 @@ import { useBusinessDay } from "../businessDay";
 import { Alert, EmptyState, FormActions, FormCard, FormField, FormRow, PageHeader, Panel, RowMenuIcons, TableRowMenu } from "../components/ui";
 import { movementTypeLabel } from "../utils/labels";
 import ProductImage from "../components/ProductImage";
-import { productsNeedingImageHydration, syncProductImageCache } from "../utils/productImageCache";
+import {
+  hydrateProductImages,
+  productsNeedingImageHydration,
+  syncProductImageCache,
+} from "../utils/productImageCache";
 
 const fmt = (n) =>
   Number(n || 0).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
@@ -77,19 +81,12 @@ export default function MovementsPage() {
       api.listProducts(token, { active_only: false, include_images: false }),
       api.listCustomers(token),
     ]);
-    let list = catalog;
+    syncProductImageCache(catalog, { mergeOnly: true });
     if (productsNeedingImageHydration(catalog)) {
-      try {
-        list = await api.listProducts(token, { active_only: false, include_images: true });
-        syncProductImageCache(list, { mergeOnly: true });
-      } catch {
-        syncProductImageCache(catalog, { mergeOnly: true });
-      }
-    } else {
-      syncProductImageCache(catalog, { mergeOnly: true });
+      await hydrateProductImages(token, catalog, api.fetchProductImageDataUrl);
     }
-    setProducts(list.filter((p) => p.is_active !== false));
-    setAllProducts(list);
+    setProducts(catalog.filter((p) => p.is_active !== false));
+    setAllProducts(catalog);
     setCustomers(c.filter((x) => x.is_active !== false));
   }
 

@@ -29,6 +29,7 @@ class User(Base):
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     avatar_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
+    avatar_drive_file_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     products: Mapped[list["Product"]] = relationship(back_populates="owner")
@@ -74,6 +75,7 @@ class Product(Base):
     context_type: Mapped[str] = mapped_column(String(40), default="general")  # tienda|papeleria|personal|general
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     image_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
+    image_drive_file_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

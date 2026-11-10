@@ -17,6 +17,7 @@ from app.schemas.dtos import (
     UserLogin,
     UserOut,
 )
+from app.core.user_presenter import user_to_out
 from app.services.auth_service import AuthService
 
 router = APIRouter()
@@ -50,7 +51,7 @@ def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db))
 
 @router.get("/me", response_model=UserOut)
 def me(user: User = Depends(get_current_user)):
-    return UserOut.model_validate(user)
+    return user_to_out(user)
 
 
 @router.put("/me", response_model=UserOut)

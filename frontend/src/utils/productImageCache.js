@@ -85,6 +85,30 @@ export function productsNeedingImageHydration(products) {
   return products.some((p) => p?.id && p.has_image && !getProductImageSrc(p));
 }
 
+/** Descarga fotos desde /api/media (Drive) y las guarda en caché local. */
+export async function hydrateProductImages(token, products, fetchDataUrl) {
+  if (!token || !Array.isArray(products) || !products.length) return;
+  const missing = products.filter((p) => p?.id && p.has_image && !getProductImageSrc(p));
+  if (!missing.length) return;
+
+  const store = readStore();
+  let changed = false;
+
+  await Promise.all(
+    missing.map(async (p) => {
+      try {
+        const dataUrl = await fetchDataUrl(token, p.id);
+        store[p.id] = { updated_at: p.updated_at, src: dataUrl };
+        changed = true;
+      } catch {
+        /* omitir filas sin imagen accesible */
+      }
+    }),
+  );
+
+  if (changed) writeStore(store);
+}
+
 export function clearProductImageCacheEntry(productId) {
   if (!productId) return;
   const store = readStore();

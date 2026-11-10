@@ -12,6 +12,7 @@ from app.repositories.customer_repository import CustomerRepository
 from app.repositories.loan_repository import LoanRepository
 from app.repositories.order_repository import OrderRepository
 from app.repositories.product_repository import MovementRepository, ProductRepository
+from app.services.image_storage import apply_product_image, product_has_image
 from app.schemas.dtos import (
     CategoryCreate,
     CategoryOut,
@@ -83,7 +84,7 @@ class InventoryService:
     ) -> ProductOut:
         if include_image:
             out = ProductOut.model_validate(product)
-            out.has_image = has_image if has_image is not None else bool(product.image_base64)
+            out.has_image = has_image if has_image is not None else product_has_image(product)
         else:
             hi = has_image if has_image is not None else False
             out = ProductOut(
@@ -143,10 +144,19 @@ class InventoryService:
     def create_product(self, user: User, payload: ProductCreate) -> ProductOut:
         if payload.category_id and not self.categories.get(payload.category_id, user.id):
             raise HTTPException(status_code=400, detail="Categoría inválida")
+        data = payload.model_dump()
+        image_b64 = data.pop("image_base64", None)
         try:
-            product = self.products.create(user.id, **payload.model_dump())
+            product = self.products.create(user.id, **data)
         except Exception as exc:
             raise HTTPException(status_code=400, detail="No se pudo crear el producto") from exc
+        if image_b64:
+            try:
+                apply_product_image(self.db, product, user.id, image_b64)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            except Exception as exc:
+                raise HTTPException(status_code=502, detail="No se pudo guardar la imagen en Drive") from exc
         return self._product_out(product, set())
 
     def update_product(self, user: User, product_id: UUID, payload: ProductUpdate) -> ProductOut:
@@ -154,10 +164,21 @@ class InventoryService:
         if not product:
             raise HTTPException(status_code=404, detail="Producto no encontrado")
         data = payload.model_dump(exclude_unset=True)
+        if "image_base64" in data:
+            image_b64 = data.pop("image_base64")
+            try:
+                if image_b64 is None:
+                    apply_product_image(self.db, product, user.id, None, clear_only=True)
+                else:
+                    apply_product_image(self.db, product, user.id, image_b64)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            except Exception as exc:
+                raise HTTPException(status_code=502, detail="No se pudo guardar la imagen en Drive") from exc
         if "category_id" in data and data["category_id"] is not None:
             if not self.categories.get(data["category_id"], user.id):
                 raise HTTPException(status_code=400, detail="Categoría inválida")
-        updated = self.products.update(product, **data)
+        updated = self.products.update(product, **data) if data else product
         return self._product_out(updated)
 
     def delete_product(self, user: User, product_id: UUID) -> None:
