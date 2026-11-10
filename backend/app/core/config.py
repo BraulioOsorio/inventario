@@ -59,6 +59,9 @@ class Settings(BaseSettings):
 
     GOOGLE_DRIVE_FOLDER_ID: str = ""
     GOOGLE_SERVICE_ACCOUNT_JSON: str = ""
+    GOOGLE_OAUTH_CLIENT_ID: str = ""
+    GOOGLE_OAUTH_CLIENT_SECRET: str = ""
+    GOOGLE_OAUTH_REFRESH_TOKEN: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -2,6 +2,7 @@
 *-f7043f08756f.json
 *iam.gserviceaccount.com*.json
 vocal-tracer-*.json
+client_secret_oauth.json
 .env
 .env.local
 .env.*.local

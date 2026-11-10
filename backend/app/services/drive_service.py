@@ -1,36 +1,74 @@
-"""Google Drive (cuenta única, carpeta por usuario en el árbol)."""
+"""Google Drive (cuenta única, carpeta por usuario en el árbol).
+
+Las cuentas de servicio no tienen cuota en «Mi unidad» de Gmail personal.
+Usar OAuth (refresh token de tu cuenta) o Shared Drives de Workspace.
+"""
 from __future__ import annotations
 
 import base64
 import json
+import logging
 import re
-from functools import lru_cache
 from io import BytesIO
 from uuid import UUID
 
+from google.auth.transport.requests import Request
 from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
 from app.core.avatar_policy import DATA_URL_PATTERN
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
 DRIVE_SCOPES = ("https://www.googleapis.com/auth/drive",)
 
 _DATA_URL_TAIL = re.compile(r"^data:image/[\w+]+;base64,", re.IGNORECASE)
 
 
+def _oauth_configured() -> bool:
+    return bool(
+        (settings.GOOGLE_OAUTH_REFRESH_TOKEN or "").strip()
+        and (settings.GOOGLE_OAUTH_CLIENT_ID or "").strip()
+        and (settings.GOOGLE_OAUTH_CLIENT_SECRET or "").strip()
+    )
+
+
+def _service_account_configured() -> bool:
+    return bool((settings.GOOGLE_SERVICE_ACCOUNT_JSON or "").strip())
+
+
 def drive_enabled() -> bool:
     folder = (settings.GOOGLE_DRIVE_FOLDER_ID or "").strip()
-    raw = (settings.GOOGLE_SERVICE_ACCOUNT_JSON or "").strip()
-    return bool(folder and raw)
+    return bool(folder and (_oauth_configured() or _service_account_configured()))
 
 
-@lru_cache
+def _credentials():
+    """OAuth (tu Drive con cuota) tiene prioridad sobre cuenta de servicio."""
+    if _oauth_configured():
+        creds = Credentials(
+            token=None,
+            refresh_token=settings.GOOGLE_OAUTH_REFRESH_TOKEN.strip(),
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=settings.GOOGLE_OAUTH_CLIENT_ID.strip(),
+            client_secret=settings.GOOGLE_OAUTH_CLIENT_SECRET.strip(),
+            scopes=list(DRIVE_SCOPES),
+        )
+        if not creds.valid:
+            creds.refresh(Request())
+        return creds
+
+    if _service_account_configured():
+        info = json.loads(settings.GOOGLE_SERVICE_ACCOUNT_JSON)
+        return service_account.Credentials.from_service_account_info(info, scopes=DRIVE_SCOPES)
+
+    raise RuntimeError("Google Drive no configurado")
+
+
 def _drive_service():
-    info = json.loads(settings.GOOGLE_SERVICE_ACCOUNT_JSON)
-    creds = service_account.Credentials.from_service_account_info(info, scopes=DRIVE_SCOPES)
-    return build("drive", "v3", credentials=creds, cache_discovery=False)
+    return build("drive", "v3", credentials=_credentials(), cache_discovery=False)
 
 
 def _root_folder_id() -> str:
