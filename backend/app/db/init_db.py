@@ -202,8 +202,13 @@ def init_db(retries: int = 3, delay_seconds: int = 3) -> None:
             migrate_schema()
             seed_admin()
             try:
+                from app.services.drive_service import drive_auth_mode, drive_enabled
                 from app.services.image_migration import migrate_legacy_images_batch
 
+                if drive_enabled():
+                    print(f"Google Drive: modo {drive_auth_mode()}")
+                else:
+                    print("Google Drive: no configurado (falta carpeta u OAuth)")
                 migrate_legacy_images_batch()
             except Exception as mig_exc:  # noqa: BLE001
                 print(f"Migración imágenes a Drive: {mig_exc}")

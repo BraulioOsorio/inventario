@@ -45,6 +45,16 @@ def drive_enabled() -> bool:
     return bool(folder and (_oauth_configured() or _service_account_configured()))
 
 
+def drive_auth_mode() -> str:
+    if not (settings.GOOGLE_DRIVE_FOLDER_ID or "").strip():
+        return "disabled"
+    if _oauth_configured():
+        return "oauth"
+    if _service_account_configured():
+        return "service_account"
+    return "disabled"
+
+
 def _credentials():
     """OAuth (tu Drive con cuota) tiene prioridad sobre cuenta de servicio."""
     if _oauth_configured():
