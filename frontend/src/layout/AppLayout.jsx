@@ -14,6 +14,7 @@ const NAV = [
   { to: "/clientes", label: "Clientes", icon: "customers", desc: "Directorio de contactos" },
   { to: "/categorias", label: "Categorías", icon: "tag", desc: "Organización" },
   { to: "/alertas", label: "Alertas", icon: "bell", desc: "Stock bajo" },
+  { to: "/reportes", label: "Reportes", icon: "reports", desc: "PDF ventas e inventario" },
 ];
 
 function NavIcon({ name }) {
@@ -66,6 +67,12 @@ function NavIcon({ name }) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2z" />
         <path d="M10 20a2 2 0 0 0 4 0" />
+      </svg>
+    ),
+    reports: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M6 3h8l4 4v14H6z" />
+        <path d="M14 3v5h5M8 13h8M8 17h6M8 9h4" />
       </svg>
     ),
     users: (

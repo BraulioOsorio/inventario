@@ -12,6 +12,7 @@ import CustomersPage from "./pages/CustomersPage";
 import UsersPage from "./pages/UsersPage";
 import ProfilePage from "./pages/ProfilePage";
 import AlertsPage from "./pages/AlertsPage";
+import ReportsPage from "./pages/ReportsPage";
 import AppLayout, { RequireAuth } from "./layout/AppLayout";
 import { useAuth } from "./auth";
 
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="categorias" element={<CategoriesPage />} />
         <Route path="movimientos" element={<MovementsPage />} />
         <Route path="alertas" element={<AlertsPage />} />
+        <Route path="reportes" element={<ReportsPage />} />
         <Route path="perfil" element={<ProfilePage />} />
         <Route
           path="usuarios"

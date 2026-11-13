@@ -220,4 +220,26 @@ export const api = {
   // Notificaciones / Campanita
   getNotifications: (token) =>
     request("/api/notifications", { token }),
+  downloadReportPdf: async (token, reportKey, params = {}) => {
+    const q = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") q.set(k, String(v));
+    });
+    const qs = q.toString();
+    const res = await fetch(`${API_URL}/api/reports/${reportKey}/pdf${qs ? `?${qs}` : ""}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      let message = "No se pudo generar el reporte";
+      try {
+        const data = JSON.parse(text);
+        message = data.detail || message;
+      } catch {
+        if (text) message = text;
+      }
+      throw new Error(message);
+    }
+    return res.blob();
+  },
 };

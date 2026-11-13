@@ -20,6 +20,7 @@ from app.api.routes import (
     orders,
     payment_methods,
     products,
+    reports,
     users,
 )
 
@@ -43,6 +44,7 @@ app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(categories.router, prefix="/api/categories", tags=["Categories"])
 app.include_router(products.router, prefix="/api/products", tags=["Products"])
 app.include_router(media.router, prefix="/api/media", tags=["Media"])
+app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(movements.router, prefix="/api/movements", tags=["Movements"])
 app.include_router(business_days.router, prefix="/api/business-days", tags=["BusinessDays"])
 app.include_router(customers.router, prefix="/api/customers", tags=["Customers"])

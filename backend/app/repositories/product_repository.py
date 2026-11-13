@@ -1,7 +1,9 @@
 from uuid import UUID
 
 from sqlalchemy import and_, or_
-from sqlalchemy.orm import Session, load_only
+from datetime import datetime
+
+from sqlalchemy.orm import Session, joinedload, load_only
 
 from app.models.entities import Product, StockMovement
 
@@ -181,3 +183,45 @@ class MovementRepository:
         self.db.commit()
         self.db.refresh(movement)
         return movement
+
+    def list_sales_movements(
+        self,
+        owner_id: UUID,
+        start: datetime,
+        end: datetime,
+        *,
+        pos_only: bool = True,
+    ) -> list[StockMovement]:
+        q = (
+            self.db.query(StockMovement)
+            .options(joinedload(StockMovement.product))
+            .filter(
+                StockMovement.owner_id == owner_id,
+                StockMovement.movement_type == "out",
+                StockMovement.reverted_at.is_(None),
+                StockMovement.created_at >= start,
+                StockMovement.created_at < end,
+            )
+        )
+        if pos_only:
+            q = q.filter(StockMovement.note.isnot(None), StockMovement.note.like("Venta POS%"))
+        return q.order_by(StockMovement.created_at.asc()).all()
+
+    def list_movements_in_range(
+        self,
+        owner_id: UUID,
+        start: datetime,
+        end: datetime,
+    ) -> list[StockMovement]:
+        return (
+            self.db.query(StockMovement)
+            .options(joinedload(StockMovement.product))
+            .filter(
+                StockMovement.owner_id == owner_id,
+                StockMovement.reverted_at.is_(None),
+                StockMovement.created_at >= start,
+                StockMovement.created_at < end,
+            )
+            .order_by(StockMovement.created_at.desc())
+            .all()
+        )

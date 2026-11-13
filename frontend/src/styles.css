@@ -1248,6 +1248,51 @@ tbody tr:hover { background: #f8fafc; }
 .password-rule-icon svg { width: 11px; height: 11px; }
 .row-pending { background: #fffaf2 !important; }
 
+.reports-page .report-filters-panel { margin-bottom: var(--space-section, 1.35rem); }
+.report-filters-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+.report-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: var(--space-card, 1.1rem);
+}
+.report-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 0.85rem;
+  color: var(--text);
+}
+.report-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  gap: var(--space-card, 1.1rem);
+}
+.report-card {
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 9.5rem;
+}
+.report-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.report-card p {
+  margin: 0;
+  flex: 1;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 @media (max-width: 768px) {
   .module-topbar { padding: 0.75rem 1rem; }
   .dash-grid-home { grid-template-columns: 1fr; }
